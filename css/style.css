@@ -9,6 +9,7 @@
   --accent:#5B8C6E;
   --accent-clair:#E4EEE7;
   --sur-accent:#FFFFFF;
+  --danger:#B14A4A;
   --rayon:12px;
 }
 @media (prefers-color-scheme:dark){
@@ -21,6 +22,7 @@
     --accent:#7FB394;
     --accent-clair:#23302A;
     --sur-accent:#12170F;
+    --danger:#E08585;
   }
 }
 
@@ -124,3 +126,46 @@ nav a span{display:block;font-size:19px;line-height:1.4}
 nav a.on{color:var(--accent);font-weight:500}
 
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ---------- Écran Tâches ---------- */
+
+.duo-entete{display:flex;justify-content:space-between;align-items:center}
+button.court{height:36px}
+
+.carte.rangee{display:flex;align-items:center;gap:12px}
+.chevron{flex:none;font-size:22px;line-height:1;color:var(--doux)}
+
+/* ---------- Formulaire ---------- */
+
+.topbar{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:10px;padding:20px 0 24px;
+}
+.topbar .titre{font-size:15px;font-weight:500}
+.topbar button{height:36px;padding:0 12px}
+
+.champ{margin-bottom:20px}
+.champ label{display:block;margin-bottom:6px;font-size:13px;color:var(--doux)}
+.aide{margin:6px 0 0;font-size:12px;color:var(--doux)}
+.erreur{margin:0 0 18px;font-size:13px;color:var(--danger)}
+
+.champ input{
+  width:100%;height:44px;padding:0 12px;
+  font:400 16px/1 system-ui,sans-serif;
+  color:var(--encre);background:transparent;
+  border:1px solid var(--trait);border-radius:10px;
+}
+.champ input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.segments{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.jours{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+button.jour{padding:0}
+button.seg.on,button.jour.on{
+  background:var(--accent-clair);border-color:var(--accent);color:var(--accent);
+}
+
+button.danger{
+  width:100%;margin-top:12px;
+  color:var(--danger);border-color:var(--danger);
+}
