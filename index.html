@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F3F5F1">
+<title>Tâches</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<main>
+
+  <header class="entete">
+    <h1>Mardi 2 septembre</h1>
+    <p class="sub">3 tâches à faire</p>
+  </header>
+
+  <!-- Compteur au repos -->
+  <article class="carte">
+    <div class="haut">
+      <span class="marque" aria-hidden="true"></span>
+      <div class="corps">
+        <div class="ligne">
+          <span class="nom">Marche</span>
+          <span class="cumul">47 / 600 km</span>
+        </div>
+        <p class="detail">6 km aujourd'hui</p>
+      </div>
+    </div>
+    <div class="barre"><i style="width:8%"></i></div>
+  </article>
+
+  <!-- Compteur déplié -->
+  <article class="carte ouverte">
+    <div class="haut">
+      <span class="marque" aria-hidden="true"></span>
+      <div class="corps">
+        <div class="ligne">
+          <span class="nom">Lecture</span>
+          <span class="cumul">1 240 / 12 000</span>
+        </div>
+        <p class="detail">33 pages aujourd'hui · 10 saisies · reste 23</p>
+      </div>
+    </div>
+    <div class="saisie">
+      <input type="number" step="any" placeholder="0" aria-label="Pages lues">
+      <button class="ajout">Ajouter</button>
+      <button class="icone" aria-label="Pas aujourd'hui">⊘</button>
+    </div>
+    <div class="barre"><i style="width:10%"></i></div>
+  </article>
+
+  <!-- À cocher -->
+  <article class="carte">
+    <div class="haut">
+      <span class="marque" aria-hidden="true"></span>
+      <div class="corps">
+        <span class="nom">Ranger le bureau</span>
+        <p class="detail">Tous les 3 jours</p>
+      </div>
+    </div>
+  </article>
+
+  <p class="sec">Terminé</p>
+
+  <!-- Objectif du jour atteint -->
+  <article class="carte faite">
+    <div class="haut">
+      <span class="marque" aria-hidden="true">✓</span>
+      <div class="corps">
+        <div class="ligne">
+          <span class="nom">Formation</span>
+          <span class="cumul">18 / 40</span>
+        </div>
+        <p class="detail">2 modules faits</p>
+      </div>
+    </div>
+    <div class="barre"><i style="width:45%"></i></div>
+  </article>
+
+  <!-- Écarté -->
+  <article class="carte ecartee">
+    <div class="haut">
+      <span class="marque" aria-hidden="true"></span>
+      <div class="corps">
+        <span class="nom">Aspirateur</span>
+        <p class="detail">Pas aujourd'hui</p>
+      </div>
+    </div>
+  </article>
+
+</main>
+
+<nav>
+  <a class="on" href="#/"><span>◉</span>Aujourd'hui</a>
+  <a href="#/progression"><span>◔</span>Progression</a>
+  <a href="#/taches"><span>≡</span>Tâches</a>
+</nav>
+
+</body>
+</html>

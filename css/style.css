@@ -1,0 +1,121 @@
+/* style.css — feuille unique. Aucune police externe : rien à télécharger. */
+
+:root{
+  --bg:#F3F5F1;
+  --carte:#FFFFFF;
+  --encre:#1A1D19;
+  --doux:#6B7268;
+  --trait:#E4E7E0;
+  --accent:#5B8C6E;
+  --accent-clair:#E4EEE7;
+  --sur-accent:#FFFFFF;
+  --rayon:12px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#131512;
+    --carte:#1B1E19;
+    --encre:#E7EAE4;
+    --doux:#8B9387;
+    --trait:#272B25;
+    --accent:#7FB394;
+    --accent-clair:#23302A;
+    --sur-accent:#12170F;
+  }
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--encre)}
+body{
+  font:400 16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-variant-numeric:tabular-nums;
+}
+main{
+  max-width:560px;margin:0 auto;
+  padding:0 16px calc(84px + env(safe-area-inset-bottom));
+}
+
+/* En-tête */
+.entete{padding:28px 4px 20px}
+.entete h1{margin:0;font-size:22px;font-weight:500;letter-spacing:-.01em}
+.sub{margin:4px 0 0;font-size:13px;color:var(--doux)}
+.sec{margin:26px 4px 10px;font-size:12px;color:var(--doux)}
+
+/* Carte */
+.carte{
+  background:var(--carte);
+  border:1px solid var(--trait);
+  border-radius:var(--rayon);
+  padding:14px 16px;
+  margin-bottom:10px;
+  cursor:pointer;
+  transition:border-color .15s,opacity .15s;
+}
+.carte.ouverte{border-color:var(--accent)}
+.carte.ecartee{opacity:.5}
+
+.haut{display:flex;gap:14px;align-items:flex-start}
+.corps{flex:1;min-width:0}
+
+.ligne{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.nom{font-size:16px;font-weight:500}
+.cumul{flex:none;font-size:12px;color:var(--doux)}
+.detail{margin:3px 0 0;font-size:13px;color:var(--doux)}
+
+/* Indicateur rond */
+.marque{
+  width:26px;height:26px;flex:none;margin-top:2px;
+  border:1.5px solid var(--trait);border-radius:50%;
+  display:grid;place-items:center;
+  font-size:14px;line-height:1;color:transparent;
+  transition:background-color .18s,border-color .18s,color .18s;
+}
+.carte.faite .marque{background:var(--accent);border-color:var(--accent);color:var(--sur-accent)}
+.carte.faite .nom{color:var(--doux);text-decoration:line-through}
+.carte.ecartee .marque{border-style:dashed}
+
+/* Barre de progression */
+.barre{
+  height:4px;margin-top:12px;overflow:hidden;
+  background:var(--accent-clair);border-radius:2px;
+}
+.barre i{display:block;height:100%;background:var(--accent);border-radius:2px}
+
+/* Zone de saisie */
+.saisie{display:flex;gap:8px;align-items:center;margin-top:12px}
+.saisie input{
+  flex:1;min-width:0;height:44px;
+  font:500 17px/1 system-ui,sans-serif;font-variant-numeric:tabular-nums;
+  color:var(--encre);background:transparent;
+  border:1px solid var(--trait);border-radius:10px;padding:0 12px;
+}
+.saisie input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+
+button{
+  height:44px;font:500 14px system-ui,sans-serif;
+  border:1px solid var(--trait);border-radius:10px;
+  background:transparent;color:var(--encre);cursor:pointer;
+}
+button.ajout{
+  padding:0 16px;
+  background:var(--accent);border-color:var(--accent);color:var(--sur-accent);
+}
+button.icone{width:44px;padding:0;font-size:18px;color:var(--doux)}
+button:active{transform:scale(.98)}
+button:focus-visible,.carte:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Navigation */
+nav{
+  position:fixed;left:0;right:0;bottom:0;display:flex;
+  background:var(--carte);border-top:1px solid var(--trait);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+nav a{
+  flex:1;padding:10px 4px 12px;
+  text-align:center;text-decoration:none;
+  font-size:11px;color:var(--doux);
+}
+nav a span{display:block;font-size:19px;line-height:1.4}
+nav a.on{color:var(--accent);font-weight:500}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
