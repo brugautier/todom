@@ -5,6 +5,7 @@ import * as store from './store.js';
 import * as today from './views/today.js';
 import * as tasks from './views/tasks.js';
 import * as progress from './views/progress.js';
+import * as settings from './views/settings.js';
 import * as editor from './views/editor.js';
 import { today as maintenant } from './date.js';
 
@@ -21,6 +22,7 @@ function resoudre(r) {
   if (r === '/') return today;
   if (r === '/taches') return tasks;
   if (r === '/progression') return progress;
+  if (r === '/reglages') return settings;
 
   if (r.startsWith('/taches/')) {
     const id = r.slice('/taches/'.length);
@@ -68,6 +70,7 @@ function verifierJour() {
 store.init();
 today.onRedraw(dessiner);
 editor.onRedraw(dessiner);
+settings.onRedraw(dessiner);
 store.subscribe(dessiner);
 addEventListener('hashchange', dessiner);
 addEventListener('visibilitychange', () => { if (!document.hidden) verifierJour(); });

@@ -1,13 +1,13 @@
-// store.js — la seule porte d'entrée vers les données. Rien d'autre ne
-// touche au localStorage.
+// store.js — la seule porte d'entrée vers les données. Rien d'autre ne touche
+// au localStorage.
 //
 // Forme du fichier :
 // {
 //   v: 1,
 //   tasks: [
-//     { id, n:'Ranger le bureau', t:'k', int:3 }
-//     { id, n:'Aspirateur',       t:'k', j:[1] }
-//     { id, n:'Marche', t:'c', u:'km', tot:600, fin:'2026-12-31' }
+//     { id, n:'Ranger le bureau', t:'k', int:3 }                         → à cocher, tous les 3 jours
+//     { id, n:'Aspirateur',       t:'k', j:[1] }                         → à cocher, le lundi
+//     { id, n:'Marche', t:'c', u:'km', tot:600, fin:'2026-12-31' }       → compteur
 //   ],
 //   log: { 'AAAA-MM-JJ': { idTache: 12.5 | 1 | '-' } }
 // }
@@ -178,6 +178,12 @@ export function addAmount(date, id, delta) {
 
 export function exportJSON() {
   return JSON.stringify(data);
+}
+
+/** Vide tout : tâches et historique. */
+export function clear() {
+  data = neuf();
+  commit();
 }
 
 export function importJSON(texte) {
