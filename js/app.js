@@ -4,6 +4,7 @@
 import * as store from './store.js';
 import * as today from './views/today.js';
 import * as tasks from './views/tasks.js';
+import * as progress from './views/progress.js';
 import * as editor from './views/editor.js';
 import { today as maintenant } from './date.js';
 
@@ -19,6 +20,7 @@ function route() {
 function resoudre(r) {
   if (r === '/') return today;
   if (r === '/taches') return tasks;
+  if (r === '/progression') return progress;
 
   if (r.startsWith('/taches/')) {
     const id = r.slice('/taches/'.length);
