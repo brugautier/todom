@@ -154,6 +154,22 @@ button.court{height:36px}
 .flamme{width:14px;height:14px;flex:none;color:var(--trait)}
 .flamme.on{color:var(--accent)}
 
+/* ---------- Réglages ---------- */
+
+.bloc{
+  background:var(--carte);border:1px solid var(--trait);
+  border-radius:var(--rayon);padding:16px;margin-bottom:12px;
+}
+.bloc.attention{border-color:var(--accent)}
+.bloc h2{margin:0 0 6px;font-size:15px;font-weight:500}
+.bloc .aide{margin:0 0 14px;line-height:1.5}
+
+button.large{width:100%;margin-top:8px}
+.note{
+  margin:0 0 16px;padding:12px 14px;font-size:13px;
+  color:var(--accent);background:var(--accent-clair);border-radius:10px;
+}
+
 /* ---------- Formulaire ---------- */
 
 .topbar{
