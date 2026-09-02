@@ -1,17 +1,19 @@
-// engine.js — toutes les règles de calcul. Ne touche ni au DOM ni au stockage
-// en écriture : on lit le store, on renvoie un état.
+// engine.js — toutes les règles de calcul. Ne touche pas au DOM et n'écrit
+// jamais dans le store : on lit, on renvoie un état.
 
-import { diff, weekday, add } from './date.js';
+import { diff, weekday, add, today } from './date.js';
 import * as store from './store.js';
 
 export const COCHE = 'k';
 export const COMPTEUR = 'c';
 
+/* ================= Récurrence ================= */
+
 /**
  * La tâche est-elle prévue ce jour-là ?
- *   t.j   → liste de jours de semaine, 1 = lundi
- *   t.int → tous les N jours, à partir de la dernière validation
- *   ni l'un ni l'autre → tous les jours
+ *   t.j   → jours de semaine, 1 = lundi
+ *   t.int → tous les N jours depuis la dernière validation
+ *   sinon → tous les jours
  */
 export function isDue(t, date) {
   if (t.j && t.j.length) return t.j.includes(weekday(date));
@@ -22,11 +24,9 @@ export function isDue(t, date) {
   return true;
 }
 
-/** Dernier jour, strictement avant `date`, où la tâche a été validée. */
 function dernierFait(id, date) {
   let derniere = null;
-  const log = store.all().log;
-  for (const [d, rec] of Object.entries(log)) {
+  for (const [d, rec] of Object.entries(store.all().log)) {
     const v = rec[id];
     if (d < date && v !== undefined && v !== store.ECARTE) {
       if (!derniere || d > derniere) derniere = d;
@@ -36,7 +36,7 @@ function dernierFait(id, date) {
 }
 
 /** Jours éligibles entre deux dates incluses, en tenant compte de t.j. */
-function joursRestants(t, de, a) {
+function eligibles(t, de, a) {
   const n = diff(de, a) + 1;
   if (n <= 0) return 0;
   if (!t.j || !t.j.length) return n;
@@ -48,19 +48,20 @@ function joursRestants(t, de, a) {
   return compte;
 }
 
-/** Entier au-dessus de 10, dixième en dessous. Toujours arrondi au supérieur. */
+/** Entier au-dessus de 10, dixième en dessous, toujours arrondi au supérieur. */
 export function arrondi(n) {
   return n >= 10 ? Math.ceil(n) : Math.ceil(n * 10) / 10;
 }
 
+/* ================= État du jour ================= */
+
 /**
  * État d'une tâche à une date.
+ * Commun    : type, ecarte, du, fait
+ * Compteurs : cible, saisi, manque, cumul, reste, jours, fini, tard
  *
- * Commun     : type, ecarte, du, fait
- * Compteurs  : cible, saisi, manque, cumul, reste, jours, fini, tard
- *
- * La cible du jour se calcule sur le reste au réveil, pas sur le reste courant :
- * ce que tu saisis dans la journée remplit l'objectif, il ne le déplace pas.
+ * La cible se calcule sur le reste au réveil : ce que tu saisis dans la
+ * journée remplit l'objectif, il ne le déplace pas.
  */
 export function state(t, date) {
   const brut = store.entry(date, t.id);
@@ -70,17 +71,16 @@ export function state(t, date) {
     return { type: COCHE, ecarte, du: isDue(t, date), fait: brut === 1 };
   }
 
-  const veille = add(date, -1);
-  const acquis = store.total(t.id, null, veille);
+  const acquis = store.total(t.id, null, add(date, -1));
   const saisi = store.amount(date, t.id);
   const reste = Math.max(0, (t.tot || 0) - acquis);
 
-  const dispo = joursRestants(t, date, t.fin);
-  const tard = dispo <= 0;                    // échéance atteinte ou dépassée
-  const jours = Math.max(1, dispo);           // jamais de division par zéro
+  const dispo = eligibles(t, date, t.fin);
+  const tard = dispo <= 0;
+  const jours = Math.max(1, dispo);
 
   let cible = reste > 0 ? arrondi(reste / jours) : 0;
-  if (cible > reste) cible = reste;           // ne jamais demander plus que le reste
+  if (cible > reste) cible = reste;
 
   return {
     type: COMPTEUR, ecarte, tard, jours, reste, cible, saisi,
@@ -92,9 +92,96 @@ export function state(t, date) {
   };
 }
 
-/** Les tâches à afficher pour une date, avec leur état. */
 export function agenda(date) {
   return store.tasks()
     .map(t => ({ task: t, etat: state(t, date) }))
     .filter(({ etat }) => etat.du || etat.ecarte || etat.fait);
+}
+
+/* ================= Historique ================= */
+
+/** Premier jour réellement enregistré pour cette tâche, sinon null. */
+export function premierJour(id) {
+  let premier = null;
+  for (const [d, rec] of Object.entries(store.all().log)) {
+    if (rec[id] !== undefined && (!premier || d < premier)) premier = d;
+  }
+  return premier;
+}
+
+/** Date de référence d'un compteur : celle saisie, sinon le premier jour suivi. */
+export function debut(t) {
+  return t.deb || premierJour(t.id) || today();
+}
+
+/**
+ * Séries. On avance jour par jour depuis le premier jour enregistré :
+ * les jours antérieurs au suivi sont ignorés, pas comptés comme des échecs.
+ *
+ * Réussi  → série + 1
+ * Échoué  → série remise à zéro
+ * Neutre  → série inchangée (jour écarté, jour non dû, objectif déjà bouclé)
+ *
+ * La journée en cours ne peut qu'allonger la série, jamais la casser.
+ */
+export function series(t, jusqu = today()) {
+  const depart = premierJour(t.id);
+  if (!depart) return { encours: 0, record: 0 };
+
+  let encours = 0, record = 0, acquis = 0, derniere = null;
+
+  for (let d = depart; d <= jusqu; d = add(d, 1)) {
+    const brut = store.entry(d, t.id);
+    const aujourdhui = d === jusqu;
+
+    if (brut === store.ECARTE) continue;
+
+    let reussi;
+
+    if (t.t === COCHE) {
+      const du = t.j && t.j.length
+        ? t.j.includes(weekday(d))
+        : (!derniere || diff(derniere, d) >= (t.int || 1));
+      if (!du) continue;
+      reussi = brut === 1;
+      if (reussi) derniere = d;
+    } else {
+      const reste = Math.max(0, (t.tot || 0) - acquis);
+      const valeur = typeof brut === 'number' ? brut : 0;
+      if (reste <= 0) { acquis += valeur; continue; }
+      if (t.j && t.j.length && !t.j.includes(weekday(d))) { acquis += valeur; continue; }
+
+      const jours = Math.max(1, eligibles(t, d, t.fin));
+      const cible = Math.min(reste, arrondi(reste / jours));
+      reussi = valeur >= cible;
+      acquis += valeur;
+    }
+
+    if (reussi) {
+      encours++;
+      if (encours > record) record = encours;
+    } else if (!aujourdhui) {
+      encours = 0;
+    }
+  }
+
+  return { encours, record };
+}
+
+/**
+ * Écart au rythme idéal, exprimé dans l'unité de la tâche.
+ * Positif = avance. La journée en cours n'est pas encore attendue.
+ */
+export function rythme(t, date = today()) {
+  if (t.t !== COMPTEUR) return null;
+
+  const de = debut(t);
+  const total = eligibles(t, de, t.fin);
+  if (total <= 0) return null;
+
+  const ecoules = Math.max(0, eligibles(t, de, add(date, -1)));
+  const attendu = (t.tot || 0) * (ecoules / total);
+  const cumul = store.total(t.id, null, date);
+
+  return { ecart: cumul - attendu, attendu, cumul };
 }

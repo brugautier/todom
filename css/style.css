@@ -10,6 +10,7 @@
   --accent-clair:#E4EEE7;
   --sur-accent:#FFFFFF;
   --danger:#B14A4A;
+  --attention:#9A6B2F;
   --rayon:12px;
 }
 @media (prefers-color-scheme:dark){
@@ -23,6 +24,7 @@
     --accent-clair:#23302A;
     --sur-accent:#12170F;
     --danger:#E08585;
+    --attention:#D6A567;
   }
 }
 
@@ -134,6 +136,23 @@ button.court{height:36px}
 
 .carte.rangee{display:flex;align-items:center;gap:12px}
 .chevron{flex:none;font-size:22px;line-height:1;color:var(--doux)}
+
+/* ---------- Écran Progression ---------- */
+
+.chiffres{flex:none;font-size:13px;color:var(--doux)}
+.barre.epaisse{height:5px;border-radius:3px;margin:12px 0 10px}
+
+.bas{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.rythme{font-size:12px;color:var(--doux)}
+.rythme.avance{color:var(--accent)}
+.rythme.retard{color:var(--attention)}
+
+.serie{
+  display:inline-flex;align-items:center;gap:5px;flex:none;
+  font-size:12px;color:var(--doux);
+}
+.flamme{width:14px;height:14px;flex:none;color:var(--trait)}
+.flamme.on{color:var(--accent)}
 
 /* ---------- Formulaire ---------- */
 

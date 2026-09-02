@@ -17,7 +17,8 @@ export function onRedraw(fn) { redessiner = fn; }
 function neuf() {
   return {
     n: '', t: engine.COMPTEUR,
-    u: '', tot: '', fin: new Date().getFullYear() + '-12-31', deja: '',
+    u: '', tot: '', fin: new Date().getFullYear() + '-12-31',
+    deja: '', deb: today(),
     mode: 'int', int: 1, j: [],
   };
 }
@@ -26,7 +27,8 @@ function depuis(t) {
   return {
     n: t.n || '',
     t: t.t,
-    u: t.u || '', tot: t.tot ?? '', fin: t.fin || '', deja: '',
+    u: t.u || '', tot: t.tot ?? '', fin: t.fin || '',
+    deja: '', deb: t.deb || today(),
     mode: t.j && t.j.length ? 'j' : 'int',
     int: t.int || 1,
     j: t.j ? [...t.j] : [],
@@ -79,11 +81,18 @@ function rendreCompteur(racine, b) {
 
   if (!cible) {
     const bloc = champ('Déjà fait avant aujourd’hui', nombre('deja', b.deja, '0'));
-    const aide = document.createElement('p');
-    aide.className = 'aide';
-    aide.textContent = 'Compte dans la progression, pas dans les séries.';
-    bloc.appendChild(aide);
+    bloc.querySelector('input').onchange = () => { relire(); redessiner(); };
     racine.appendChild(bloc);
+
+    // La date de départ n'a de sens que s'il y a un acquis à situer dans le temps.
+    if (parseFloat(String(b.deja).replace(',', '.')) > 0) {
+      const depuis = champ('Depuis le', date('deb', b.deb));
+      const aide = document.createElement('p');
+      aide.className = 'aide';
+      aide.textContent = 'Sert de référence pour calculer ton avance ou ton retard.';
+      depuis.appendChild(aide);
+      racine.appendChild(depuis);
+    }
   }
 }
 
@@ -238,6 +247,7 @@ function enregistrer() {
     if (!(tot > 0)) return erreur('Le total visé doit être supérieur à zéro.');
     if (!b.fin) return erreur('Choisis une échéance.');
     tache = { n: nom, t: engine.COMPTEUR, u: b.u.trim(), tot, fin: b.fin };
+    if (b.deb) tache.deb = b.deb;
   } else {
     tache = { n: nom, t: engine.COCHE };
     if (b.mode === 'j') {
@@ -256,7 +266,9 @@ function enregistrer() {
     const creee = store.addTask(tache);
     const deja = parseFloat(String(b.deja).replace(',', '.'));
     if (b.t === engine.COMPTEUR && deja > 0) {
-      store.setEntry(today(), creee.id, deja);
+      // L'acquis est daté du jour de départ, pas d'aujourd'hui : la progression
+      // et le calcul de rythme partent ainsi du bon point.
+      store.setEntry(b.deb || today(), creee.id, deja);
     }
   }
 
