@@ -55,6 +55,8 @@ main{
 .carte.ecartee{opacity:.5}
 
 .haut{display:flex;gap:14px;align-items:flex-start}
+.carte.simple .haut{align-items:center}
+.carte.simple .marque{margin-top:0}
 .corps{flex:1;min-width:0}
 
 .ligne{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
