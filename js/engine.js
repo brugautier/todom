@@ -1,6 +1,3 @@
-// engine.js — toutes les règles de calcul. Ne touche pas au DOM et n'écrit
-// jamais dans le store : on lit, on renvoie un état.
-
 import { diff, weekday, add, today } from './date.js';
 import * as store from './store.js';
 

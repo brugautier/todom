@@ -1,27 +1,6 @@
-// store.js — la seule porte d'entrée vers les données. Rien d'autre ne touche
-// au localStorage.
-//
-// Forme du fichier :
-// {
-//   v: 1,
-//   tasks: [
-//     { id, n:'Ranger le bureau', t:'k', int:3 }                         → à cocher, tous les 3 jours
-//     { id, n:'Aspirateur',       t:'k', j:[1] }                         → à cocher, le lundi
-//     { id, n:'Marche', t:'c', u:'km', tot:600, fin:'2026-12-31' }       → compteur
-//   ],
-//   log: { 'AAAA-MM-JJ': { idTache: 12.5 | 1 | '-' } },
-//   courses: [ { id, n:'Café en grains', need:true } ]
-// }
-//
-// Valeurs du journal :
-//   nombre → cumul de la journée pour un compteur
-//   1      → tâche à cocher validée
-//   '-'    → jour écarté, « pas aujourd'hui »
-//   absent → rien de fait
-
 import { valid } from './date.js';
 
-const CLE = 'todom.v1';
+const CLE = 'todom';
 const VERSION = 1;
 
 export const ECARTE = '-';

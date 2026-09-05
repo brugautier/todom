@@ -1,5 +1,3 @@
-// views/progress.js — avancement annuel des compteurs et séries de chaque tâche.
-
 import * as store from '../store.js';
 import * as engine from '../engine.js';
 import { today, diff } from '../date.js';

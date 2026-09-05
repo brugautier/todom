@@ -1,10 +1,5 @@
-// views/settings.js — sauvegarde manuelle des données.
-//
-// Aucun service distant : l'export produit un fichier que tu ranges où tu veux,
-// l'import le relit. C'est la seule protection contre un vidage du navigateur.
-
 import * as store from '../store.js';
-import { today, libelle } from '../date.js';
+import { today } from '../date.js';
 
 let enAttente = null;   // fichier lu, en attente de confirmation
 let message = null;     // retour affiché après une action

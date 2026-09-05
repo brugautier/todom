@@ -1,9 +1,3 @@
-// views/shopping.js — inventaire permanent des articles.
-//
-// Un article coché est un article à acheter. Au magasin, on le décoche
-// une fois dans le panier : il retourne en réserve, prêt à resservir.
-// On ne supprime que par le mode « Modifier ».
-
 import * as store from '../store.js';
 
 let edition = false;

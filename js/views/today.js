@@ -1,7 +1,3 @@
-// views/today.js — l'écran d'accueil. Construit le DOM à partir du moteur
-// et écrit dans le store. Tout passe par createElement : un nom de tâche
-// contenant « < » ne doit jamais casser l'affichage.
-
 import * as store from '../store.js';
 import * as engine from '../engine.js';
 import { today, libelle, parse } from '../date.js';

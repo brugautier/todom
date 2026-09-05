@@ -1,6 +1,3 @@
-// app.js — démarrage et routage.
-// Une route = un module exposant render(racine), et parfois prepare(param).
-
 import * as store from './store.js';
 import * as engine from './engine.js';
 import * as today from './views/today.js';

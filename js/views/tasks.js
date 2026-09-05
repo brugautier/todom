@@ -1,5 +1,3 @@
-// views/tasks.js — la liste de toutes les tâches. Point d'entrée vers le formulaire.
-
 import * as store from '../store.js';
 import * as engine from '../engine.js';
 import { parse } from '../date.js';

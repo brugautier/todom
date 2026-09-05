@@ -1,8 +1,3 @@
-// views/editor.js — création et modification d'une tâche, en écran plein.
-//
-// Le brouillon vit en mémoire tant qu'on n'a pas enregistré : rien n'est écrit
-// dans le store avant l'appui sur « Enregistrer ».
-
 import * as store from '../store.js';
 import * as engine from '../engine.js';
 import { today } from '../date.js';

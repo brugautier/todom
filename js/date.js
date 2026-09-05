@@ -1,5 +1,3 @@
-// date.js — une date est toujours une chaîne "AAAA-MM-JJ" en heure locale.
-
 const MS_JOUR = 86400000;
 
 /** Objet Date → "AAAA-MM-JJ" local. */
