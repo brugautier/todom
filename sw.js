@@ -1,4 +1,4 @@
-const VERSION = 'todom-v1.0.0';
+const VERSION = 'todom-v1.1.0';
 
 const FICHIERS = [
   './',
