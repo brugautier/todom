@@ -9,7 +9,8 @@
 //     { id, n:'Aspirateur',       t:'k', j:[1] }                         → à cocher, le lundi
 //     { id, n:'Marche', t:'c', u:'km', tot:600, fin:'2026-12-31' }       → compteur
 //   ],
-//   log: { 'AAAA-MM-JJ': { idTache: 12.5 | 1 | '-' } }
+//   log: { 'AAAA-MM-JJ': { idTache: 12.5 | 1 | '-' } },
+//   courses: [ { id, n:'Café en grains', need:true } ]
 // }
 //
 // Valeurs du journal :
@@ -29,7 +30,7 @@ let data = neuf();
 const abonnes = new Set();
 
 function neuf() {
-  return { v: VERSION, tasks: [], log: {} };
+  return { v: VERSION, tasks: [], log: {}, courses: [] };
 }
 
 /* ---------------- Persistance ---------------- */
@@ -59,6 +60,7 @@ function valider(d) {
     v: d.v || VERSION,
     tasks: d.tasks,
     log: d.log && typeof d.log === 'object' ? d.log : {},
+    courses: Array.isArray(d.courses) ? d.courses : [],
   };
 }
 
@@ -178,6 +180,49 @@ export function addAmount(date, id, delta) {
   const cumul = Math.max(0, amount(date, id) + delta);
   setEntry(date, id, cumul);
   return cumul;
+}
+
+/* ---------------- Liste de courses ---------------- */
+
+export function courses() {
+  return data.courses;
+}
+
+/**
+ * Ajoute un article, marqué comme à acheter.
+ * Si le nom existe déjà, on le repasse simplement en « à acheter »
+ * au lieu de créer un doublon.
+ */
+export function addCourse(nom) {
+  const n = String(nom).trim();
+  if (!n) return null;
+
+  const existant = data.courses.find(
+    c => c.n.localeCompare(n, 'fr', { sensitivity: 'base' }) === 0
+  );
+  if (existant) {
+    existant.need = true;
+    commit();
+    return existant;
+  }
+
+  const article = { id: nouvelId(), n, need: true };
+  data.courses.push(article);
+  commit();
+  return article;
+}
+
+/** Bascule entre « à acheter » et « en réserve ». */
+export function toggleCourse(id) {
+  const c = data.courses.find(x => x.id === id);
+  if (!c) return;
+  c.need = !c.need;
+  commit();
+}
+
+export function removeCourse(id) {
+  data.courses = data.courses.filter(c => c.id !== id);
+  commit();
 }
 
 /* ---------------- Sauvegarde manuelle ---------------- */

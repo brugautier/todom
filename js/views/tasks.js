@@ -29,12 +29,23 @@ function entete() {
   const h = document.createElement('h1');
   h.textContent = 'Tâches';
 
+  const actions = document.createElement('div');
+  actions.className = 'actions';
+
+  // Les Réglages ont quitté la barre du bas pour laisser la place aux Courses.
+  const reglages = document.createElement('button');
+  reglages.className = 'court roue';
+  reglages.textContent = '⚙';
+  reglages.setAttribute('aria-label', 'Réglages');
+  reglages.onclick = () => { location.hash = '#/reglages'; };
+
   const b = document.createElement('button');
   b.className = 'ajout court';
   b.textContent = 'Nouvelle';
   b.onclick = () => { location.hash = '#/taches/nouveau'; };
 
-  el.append(h, b);
+  actions.append(reglages, b);
+  el.append(h, actions);
   return el;
 }
 

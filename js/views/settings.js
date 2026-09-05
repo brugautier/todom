@@ -14,6 +14,13 @@ let redessiner = () => {};
 export function onRedraw(fn) { redessiner = fn; }
 
 export function render(racine) {
+  const retour = document.createElement('div');
+  retour.className = 'topbar retour';
+  const sortie = document.createElement('button');
+  sortie.textContent = '‹ Tâches';
+  sortie.onclick = () => { location.hash = '#/taches'; };
+  retour.appendChild(sortie);
+  racine.appendChild(retour);
   const h = document.createElement('header');
   h.className = 'entete';
   const titre = document.createElement('h1');
