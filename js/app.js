@@ -7,6 +7,7 @@ import * as today from './views/today.js';
 import * as tasks from './views/tasks.js';
 import * as progress from './views/progress.js';
 import * as settings from './views/settings.js';
+import * as shopping from './views/shopping.js';
 import * as editor from './views/editor.js';
 import { today as maintenant } from './date.js';
 
@@ -24,6 +25,7 @@ function resoudre(r) {
   if (r === '/taches') return tasks;
   if (r === '/progression') return progress;
   if (r === '/reglages') return settings;
+  if (r === '/courses') return shopping;
 
   if (r.startsWith('/taches/')) {
     const id = r.slice('/taches/'.length);
@@ -77,6 +79,7 @@ engine.nettoyer();          // retire les ponctuelles cochées les jours précé
 today.onRedraw(dessiner);
 editor.onRedraw(dessiner);
 settings.onRedraw(dessiner);
+shopping.onRedraw(dessiner);
 store.subscribe(dessiner);
 addEventListener('hashchange', dessiner);
 addEventListener('visibilitychange', () => { if (!document.hidden) verifierJour(); });

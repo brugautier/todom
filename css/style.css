@@ -153,6 +153,43 @@ button.court{height:36px}
 .flamme{width:14px;height:14px;flex:none;color:var(--trait)}
 .flamme.on{color:var(--accent)}
 
+/* ---------- Courses ---------- */
+
+.actions{display:flex;align-items:center;gap:8px}
+button.roue{width:36px;padding:0;font-size:16px}
+button.court.actif{border-color:var(--accent);color:var(--accent)}
+
+.ajout-ligne{display:flex;gap:8px;margin:0 0 8px}
+.ajout-ligne input{
+  flex:1;min-width:0;height:44px;padding:0 12px;
+  font:400 16px/1 system-ui,sans-serif;
+  color:var(--encre);background:transparent;
+  border:1px solid var(--trait);border-radius:10px;
+}
+.ajout-ligne input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+button.plus{width:44px;padding:0;font-size:20px;flex:none}
+
+.sec.serre{margin-top:14px}
+
+.carte.article{
+  display:flex;align-items:center;gap:13px;
+  padding:13px 16px;margin-bottom:8px;
+}
+.carte.article .marque{width:24px;height:24px;margin-top:0}
+.carte.article.dispo{opacity:.55}
+.carte.article.dispo .nom{font-weight:400}
+.carte.article.prise .marque{
+  background:var(--accent);border-color:var(--accent);color:var(--sur-accent);
+}
+.carte.article .nom{flex:1;min-width:0}
+
+button.retirer{
+  width:34px;height:34px;flex:none;padding:0;
+  font-size:17px;color:var(--danger);border-color:var(--trait);
+}
+
+.topbar.retour{justify-content:flex-start;padding-bottom:8px}
+
 /* ---------- Réglages ---------- */
 
 .bloc{
