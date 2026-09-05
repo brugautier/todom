@@ -19,7 +19,7 @@ function neuf() {
     n: '', t: engine.COMPTEUR,
     u: '', tot: '', fin: new Date().getFullYear() + '-12-31',
     deja: '', deb: today(), lim: '',
-    mode: 'int', int: 1, j: [],
+    mode: 'int', int: 1, j: [], abs: [],
   };
 }
 
@@ -33,6 +33,7 @@ function depuis(t) {
     mode: t.j && t.j.length ? 'j' : 'int',
     int: t.int || 1,
     j: t.j ? [...t.j] : [],
+    abs: t.abs ? [...t.abs] : [],
   };
 }
 
@@ -124,6 +125,39 @@ function rendreCoche(racine, b) {
   } else {
     racine.appendChild(champ('Jours', pastilles(b)));
   }
+
+  const autres = store.tasks().filter(
+    x => x.t === engine.RECURRENTE && x.id !== cible && !(x.abs && x.abs.length)
+  );
+  if (autres.length) {
+    const bloc = champ('Remplace', choix(b, autres));
+    const aide = document.createElement('p');
+    aide.className = 'aide';
+    aide.textContent = 'Ces tâches sont masquées les jours où celle-ci est due, et validées avec elle.';
+    bloc.appendChild(aide);
+    racine.appendChild(bloc);
+  }
+}
+
+/** Liste de bascules : les tâches que celle-ci absorbe. */
+function choix(b, autres) {
+  const el = document.createElement('div');
+  el.className = 'choix';
+
+  for (const t of autres) {
+    const actif = b.abs.includes(t.id);
+    const bouton = document.createElement('button');
+    bouton.className = 'option' + (actif ? ' on' : '');
+    bouton.textContent = t.n;
+    bouton.setAttribute('aria-pressed', actif);
+    bouton.onclick = () => {
+      relire();
+      b.abs = actif ? b.abs.filter(x => x !== t.id) : [...b.abs, t.id];
+      redessiner();
+    };
+    el.appendChild(bouton);
+  }
+  return el;
 }
 
 /* ---------------- Briques ---------------- */
@@ -273,13 +307,14 @@ function enregistrer() {
       if (!(int >= 1)) return erreur('L’intervalle doit valoir au moins 1 jour.');
       tache.int = int;
     }
+    if (b.abs.length) tache.abs = b.abs;
   }
 
   if (cible) {
     // On repasse tous les champs à null avant d'appliquer les nouveaux :
     // changer de type ne doit pas laisser traîner l'ancienne règle.
     store.updateTask(cible, {
-      u: null, tot: null, fin: null, deb: null, int: null, j: null,
+      u: null, tot: null, fin: null, deb: null, int: null, j: null, abs: null,
       ...tache,
     });
   } else {

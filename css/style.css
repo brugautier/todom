@@ -196,8 +196,10 @@ button.large{width:100%;margin-top:8px}
 .segments.trois{grid-template-columns:repeat(3,1fr)}
 .segments.trois button{padding:0 6px;font-size:13px}
 .jours{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.choix{display:flex;flex-direction:column;gap:8px}
+button.option{width:100%;text-align:left;padding:0 14px}
 button.jour{padding:0}
-button.seg.on,button.jour.on{
+button.seg.on,button.jour.on,button.option.on{
   background:var(--accent-clair);border-color:var(--accent);color:var(--accent);
 }
 

@@ -140,6 +140,15 @@ export function updateTask(id, patch) {
 /** Supprime la tâche et tout son historique, pour ne pas laisser d'orphelins. */
 export function removeTask(id) {
   data.tasks = data.tasks.filter(t => t.id !== id);
+
+  // Une tâche supprimée ne doit plus être référencée comme remplacée.
+  for (const t of data.tasks) {
+    if (t.abs) {
+      t.abs = t.abs.filter(x => x !== id);
+      if (!t.abs.length) delete t.abs;
+    }
+  }
+
   for (const d of Object.keys(data.log)) {
     delete data.log[d][id];
     if (!Object.keys(data.log[d]).length) delete data.log[d];
