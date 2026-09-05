@@ -163,10 +163,7 @@ export function setEntry(date, id, valeur) {
 }
 
 /**
- * Ajoute au cumul du jour. C'est ce qu'appelle le bouton « Ajouter ».
- * delta peut être négatif pour corriger une erreur de saisie,
- * mais le cumul d'une journée ne descend jamais sous zéro.
- * Ajouter sur un jour écarté le réactive.
+ * Ajoute au cumul du jour.
  */
 export function addAmount(date, id, delta) {
   const cumul = Math.max(0, amount(date, id) + delta);
