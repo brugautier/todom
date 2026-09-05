@@ -1,4 +1,4 @@
-const VERSION = 'todom-v1.0.0';
+const VERSION = 'todom-v1.1.0';
 
 const FICHIERS = [
   './',
@@ -14,6 +14,7 @@ const FICHIERS = [
   './js/views/editor.js',
   './js/views/progress.js',
   './js/views/settings.js',
+  './js/views/shopping.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
 ];

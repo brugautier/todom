@@ -1,5 +1,3 @@
-// views/tasks.js — la liste de toutes les tâches. Point d'entrée vers le formulaire.
-
 import * as store from '../store.js';
 import * as engine from '../engine.js';
 import { parse } from '../date.js';
@@ -29,12 +27,23 @@ function entete() {
   const h = document.createElement('h1');
   h.textContent = 'Tâches';
 
+  const actions = document.createElement('div');
+  actions.className = 'actions';
+
+  // Les Réglages ont quitté la barre du bas pour laisser la place aux Courses.
+  const reglages = document.createElement('button');
+  reglages.className = 'court roue';
+  reglages.textContent = '⚙';
+  reglages.setAttribute('aria-label', 'Réglages');
+  reglages.onclick = () => { location.hash = '#/reglages'; };
+
   const b = document.createElement('button');
   b.className = 'ajout court';
   b.textContent = 'Nouvelle';
   b.onclick = () => { location.hash = '#/taches/nouveau'; };
 
-  el.append(h, b);
+  actions.append(reglages, b);
+  el.append(h, actions);
   return el;
 }
 
@@ -71,16 +80,26 @@ function rangee(t) {
 
 /** Phrase qui décrit la règle de la tâche, affichée sous son nom. */
 export function resume(t) {
+  if (t.t === engine.PONCTUELLE) {
+    return t.fin ? `Une fois, avant le ${dateCourte(t.fin)}` : 'Une seule fois';
+  }
   if (t.t === engine.COMPTEUR) {
     const u = t.u ? ' ' + t.u : '';
     return `${nb(t.tot)}${u} d’ici le ${dateCourte(t.fin)}`;
   }
+  let base;
   if (t.j && t.j.length) {
-    return t.j.length === 7 ? 'Chaque jour'
+    base = t.j.length === 7 ? 'Chaque jour'
       : 'Chaque ' + t.j.map(n => JOURS[n]).join(', ');
+  } else {
+    base = t.int > 1 ? `Tous les ${t.int} jours` : 'Chaque jour';
   }
-  if (t.int > 1) return `Tous les ${t.int} jours`;
-  return 'Chaque jour';
+
+  const remplacees = engine.absorbees(t);
+  if (remplacees.length) {
+    base += ' · remplace ' + remplacees.map(x => x.n).join(', ');
+  }
+  return base;
 }
 
 function dateCourte(s) {

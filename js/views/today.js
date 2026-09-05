@@ -1,10 +1,6 @@
-// views/today.js — l'écran d'accueil. Construit le DOM à partir du moteur
-// et écrit dans le store. Tout passe par createElement : un nom de tâche
-// contenant « < » ne doit jamais casser l'affichage.
-
 import * as store from '../store.js';
 import * as engine from '../engine.js';
-import { today, libelle } from '../date.js';
+import { today, libelle, parse } from '../date.js';
 
 let ouvert = null;      // id de la carte dépliée
 let redessiner = () => {};
@@ -12,6 +8,7 @@ let redessiner = () => {};
 export function onRedraw(fn) { redessiner = fn; }
 
 const nb = n => Number(n).toLocaleString('fr-FR', { maximumFractionDigits: 1 });
+const dateCourte = s => parse(s).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
 
 export function render(racine) {
   const jour = today();
@@ -101,7 +98,7 @@ function carte({ task, etat }, jour) {
 
   if (detail) {
     const p = document.createElement('p');
-    p.className = 'detail';
+    p.className = 'detail' + (etat.tard ? ' alerte' : '');
     p.textContent = detail;
     corps.appendChild(p);
   }
@@ -130,7 +127,15 @@ function carte({ task, etat }, jour) {
 
 function ligneDetail(task, etat) {
   if (etat.ecarte) return 'Pas aujourd’hui';
-  if (etat.type === engine.COCHE) return null;
+
+  if (etat.type === engine.PONCTUELLE) {
+    if (etat.fait || !etat.limite) return null;
+    return etat.tard
+      ? `En retard depuis le ${dateCourte(etat.limite)}`
+      : `Avant le ${dateCourte(etat.limite)}`;
+  }
+
+  if (etat.type === engine.RECURRENTE) return null;
 
   const u = task.u ? ' ' + task.u : '';
   if (etat.fini) return `Objectif atteint · ${nb(etat.cumul)}${u}`;
@@ -150,8 +155,13 @@ function activer(task, etat, jour) {
     ouvert = null;
     return store.setEntry(jour, task.id, null);
   }
-  if (etat.type === engine.COCHE) {
-    return store.setEntry(jour, task.id, etat.fait ? null : 1);
+  if (etat.type === engine.RECURRENTE || etat.type === engine.PONCTUELLE) {
+    const valeur = etat.fait ? null : 1;
+    store.setEntry(jour, task.id, valeur);
+    for (const a of engine.absorbees(task)) {
+      store.setEntry(jour, a.id, valeur);
+    }
+    return;
   }
   ouvert = ouvert === task.id ? null : task.id;
   redessiner();
@@ -197,29 +207,13 @@ function zoneSaisie(task, jour) {
   return zone;
 }
 
-/* ---------------- Provisoire ---------------- */
-// Disparaîtra quand l'écran de création de tâches existera.
-
 function accueilVide() {
   const el = document.createElement('div');
   el.className = 'vide';
 
   const p = document.createElement('p');
-  p.textContent = 'Aucune tâche. Charge un jeu d’essai pour voir l’écran vivre.';
+  p.textContent = 'Aucune tâche pour aujourd\'hui';
 
-  const b = document.createElement('button');
-  b.textContent = 'Charger des exemples';
-  b.onclick = exemples;
-
-  el.append(p, b);
+  el.append(p);
   return el;
-}
-
-function exemples() {
-  const fin = new Date().getFullYear() + '-12-31';
-  store.addTask({ n: 'Marche', t: 'c', u: 'km', tot: 600, fin });
-  store.addTask({ n: 'Lecture', t: 'c', u: 'pages', tot: 12000, fin });
-  store.addTask({ n: 'Formation', t: 'c', u: 'modules', tot: 40, fin });
-  store.addTask({ n: 'Ranger le bureau', t: 'k', int: 3 });
-  store.addTask({ n: 'Aspirateur', t: 'k', j: [1] });
 }

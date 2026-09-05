@@ -1,11 +1,10 @@
-// app.js — démarrage et routage.
-// Une route = un module exposant render(racine), et parfois prepare(param).
-
 import * as store from './store.js';
+import * as engine from './engine.js';
 import * as today from './views/today.js';
 import * as tasks from './views/tasks.js';
 import * as progress from './views/progress.js';
 import * as settings from './views/settings.js';
+import * as shopping from './views/shopping.js';
 import * as editor from './views/editor.js';
 import { today as maintenant } from './date.js';
 
@@ -23,6 +22,7 @@ function resoudre(r) {
   if (r === '/taches') return tasks;
   if (r === '/progression') return progress;
   if (r === '/reglages') return settings;
+  if (r === '/courses') return shopping;
 
   if (r.startsWith('/taches/')) {
     const id = r.slice('/taches/'.length);
@@ -64,13 +64,19 @@ function dessiner() {
 // on vérifie qu'on affiche toujours la bonne date.
 function verifierJour() {
   const j = maintenant();
-  if (j !== jourAffiche) { jourAffiche = j; dessiner(); }
+  if (j !== jourAffiche) {
+    jourAffiche = j;
+    engine.nettoyer(j);
+    dessiner();
+  }
 }
 
 store.init();
+engine.nettoyer();          // retire les ponctuelles cochées les jours précédents
 today.onRedraw(dessiner);
 editor.onRedraw(dessiner);
 settings.onRedraw(dessiner);
+shopping.onRedraw(dessiner);
 store.subscribe(dessiner);
 addEventListener('hashchange', dessiner);
 addEventListener('visibilitychange', () => { if (!document.hidden) verifierJour(); });

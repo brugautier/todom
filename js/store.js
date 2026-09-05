@@ -1,26 +1,6 @@
-// store.js — la seule porte d'entrée vers les données. Rien d'autre ne touche
-// au localStorage.
-//
-// Forme du fichier :
-// {
-//   v: 1,
-//   tasks: [
-//     { id, n:'Ranger le bureau', t:'k', int:3 }                         → à cocher, tous les 3 jours
-//     { id, n:'Aspirateur',       t:'k', j:[1] }                         → à cocher, le lundi
-//     { id, n:'Marche', t:'c', u:'km', tot:600, fin:'2026-12-31' }       → compteur
-//   ],
-//   log: { 'AAAA-MM-JJ': { idTache: 12.5 | 1 | '-' } }
-// }
-//
-// Valeurs du journal :
-//   nombre → cumul de la journée pour un compteur
-//   1      → tâche à cocher validée
-//   '-'    → jour écarté, « pas aujourd'hui »
-//   absent → rien de fait
-
 import { valid } from './date.js';
 
-const CLE = 'todom.v1';
+const CLE = 'todom';
 const VERSION = 1;
 
 export const ECARTE = '-';
@@ -29,7 +9,7 @@ let data = neuf();
 const abonnes = new Set();
 
 function neuf() {
-  return { v: VERSION, tasks: [], log: {} };
+  return { v: VERSION, tasks: [], log: {}, courses: [] };
 }
 
 /* ---------------- Persistance ---------------- */
@@ -59,6 +39,7 @@ function valider(d) {
     v: d.v || VERSION,
     tasks: d.tasks,
     log: d.log && typeof d.log === 'object' ? d.log : {},
+    courses: Array.isArray(d.courses) ? d.courses : [],
   };
 }
 
@@ -140,6 +121,15 @@ export function updateTask(id, patch) {
 /** Supprime la tâche et tout son historique, pour ne pas laisser d'orphelins. */
 export function removeTask(id) {
   data.tasks = data.tasks.filter(t => t.id !== id);
+
+  // Une tâche supprimée ne doit plus être référencée comme remplacée.
+  for (const t of data.tasks) {
+    if (t.abs) {
+      t.abs = t.abs.filter(x => x !== id);
+      if (!t.abs.length) delete t.abs;
+    }
+  }
+
   for (const d of Object.keys(data.log)) {
     delete data.log[d][id];
     if (!Object.keys(data.log[d]).length) delete data.log[d];
@@ -163,15 +153,55 @@ export function setEntry(date, id, valeur) {
 }
 
 /**
- * Ajoute au cumul du jour. C'est ce qu'appelle le bouton « Ajouter ».
- * delta peut être négatif pour corriger une erreur de saisie,
- * mais le cumul d'une journée ne descend jamais sous zéro.
- * Ajouter sur un jour écarté le réactive.
+ * Ajoute au cumul du jour.
  */
 export function addAmount(date, id, delta) {
   const cumul = Math.max(0, amount(date, id) + delta);
   setEntry(date, id, cumul);
   return cumul;
+}
+
+/* ---------------- Liste de courses ---------------- */
+
+export function courses() {
+  return data.courses;
+}
+
+/**
+ * Ajoute un article, marqué comme à acheter.
+ * Si le nom existe déjà, on le repasse simplement en « à acheter »
+ * au lieu de créer un doublon.
+ */
+export function addCourse(nom) {
+  const n = String(nom).trim();
+  if (!n) return null;
+
+  const existant = data.courses.find(
+    c => c.n.localeCompare(n, 'fr', { sensitivity: 'base' }) === 0
+  );
+  if (existant) {
+    existant.need = true;
+    commit();
+    return existant;
+  }
+
+  const article = { id: nouvelId(), n, need: true };
+  data.courses.push(article);
+  commit();
+  return article;
+}
+
+/** Bascule entre « à acheter » et « en réserve ». */
+export function toggleCourse(id) {
+  const c = data.courses.find(x => x.id === id);
+  if (!c) return;
+  c.need = !c.need;
+  commit();
+}
+
+export function removeCourse(id) {
+  data.courses = data.courses.filter(c => c.id !== id);
+  commit();
 }
 
 /* ---------------- Sauvegarde manuelle ---------------- */
