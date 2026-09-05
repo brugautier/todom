@@ -4,8 +4,9 @@
 import { diff, weekday, add, today } from './date.js';
 import * as store from './store.js';
 
-export const COCHE = 'k';
+export const RECURRENTE = 'k';
 export const COMPTEUR = 'c';
+export const PONCTUELLE = 'p';   // à faire une fois, reportée jusqu'à ce qu'elle soit faite
 
 /* ================= Récurrence ================= */
 
@@ -16,6 +17,7 @@ export const COMPTEUR = 'c';
  *   sinon → tous les jours
  */
 export function isDue(t, date) {
+  if (t.t === PONCTUELLE) return store.entry(date, t.id) !== 1;
   if (t.j && t.j.length) return t.j.includes(weekday(date));
   if (t.int) {
     const derniere = dernierFait(t.id, date);
@@ -67,8 +69,17 @@ export function state(t, date) {
   const brut = store.entry(date, t.id);
   const ecarte = brut === store.ECARTE;
 
-  if (t.t === COCHE) {
-    return { type: COCHE, ecarte, du: isDue(t, date), fait: brut === 1 };
+  if (t.t === PONCTUELLE) {
+    const fait = brut === 1;
+    return {
+      type: PONCTUELLE, ecarte: false, fait, du: !fait,
+      limite: t.fin || null,
+      tard: !!t.fin && !fait && date > t.fin,
+    };
+  }
+
+  if (t.t === RECURRENTE) {
+    return { type: RECURRENTE, ecarte, du: isDue(t, date), fait: brut === 1 };
   }
 
   const acquis = store.total(t.id, null, add(date, -1));
@@ -125,6 +136,8 @@ export function debut(t) {
  * La journée en cours ne peut qu'allonger la série, jamais la casser.
  */
 export function series(t, jusqu = today()) {
+  if (t.t === PONCTUELLE) return { encours: 0, record: 0 };
+
   const depart = premierJour(t.id);
   if (!depart) return { encours: 0, record: 0 };
 
@@ -138,7 +151,7 @@ export function series(t, jusqu = today()) {
 
     let reussi;
 
-    if (t.t === COCHE) {
+    if (t.t === RECURRENTE) {
       const du = t.j && t.j.length
         ? t.j.includes(weekday(d))
         : (!derniere || diff(derniere, d) >= (t.int || 1));
@@ -184,4 +197,23 @@ export function rythme(t, date = today()) {
   const cumul = store.total(t.id, null, date);
 
   return { ecart: cumul - attendu, attendu, cumul };
+}
+
+/* ================= Entretien ================= */
+
+/**
+ * Supprime les tâches ponctuelles cochées la veille.
+ */
+export function nettoyer(jour = today()) {
+  const aSupprimer = [];
+
+  for (const t of store.tasks()) {
+    if (t.t !== PONCTUELLE) continue;
+    for (const [d, rec] of Object.entries(store.all().log)) {
+      if (d < jour && rec[t.id] === 1) { aSupprimer.push(t.id); break; }
+    }
+  }
+
+  for (const id of aSupprimer) store.removeTask(id);
+  return aSupprimer.length;
 }
