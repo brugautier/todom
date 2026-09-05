@@ -78,12 +78,19 @@ export function resume(t) {
     const u = t.u ? ' ' + t.u : '';
     return `${nb(t.tot)}${u} d’ici le ${dateCourte(t.fin)}`;
   }
+  let base;
   if (t.j && t.j.length) {
-    return t.j.length === 7 ? 'Chaque jour'
+    base = t.j.length === 7 ? 'Chaque jour'
       : 'Chaque ' + t.j.map(n => JOURS[n]).join(', ');
+  } else {
+    base = t.int > 1 ? `Tous les ${t.int} jours` : 'Chaque jour';
   }
-  if (t.int > 1) return `Tous les ${t.int} jours`;
-  return 'Chaque jour';
+
+  const remplacees = engine.absorbees(t);
+  if (remplacees.length) {
+    base += ' · remplace ' + remplacees.map(x => x.n).join(', ');
+  }
+  return base;
 }
 
 function dateCourte(s) {

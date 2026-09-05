@@ -160,7 +160,12 @@ function activer(task, etat, jour) {
     return store.setEntry(jour, task.id, null);
   }
   if (etat.type === engine.RECURRENTE || etat.type === engine.PONCTUELLE) {
-    return store.setEntry(jour, task.id, etat.fait ? null : 1);
+    const valeur = etat.fait ? null : 1;
+    store.setEntry(jour, task.id, valeur);
+    for (const a of engine.absorbees(task)) {
+      store.setEntry(jour, a.id, valeur);
+    }
+    return;
   }
   ouvert = ouvert === task.id ? null : task.id;
   redessiner();

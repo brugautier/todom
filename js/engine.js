@@ -17,6 +17,11 @@ export const PONCTUELLE = 'p';   // à faire une fois, reportée jusqu'à ce qu'
  *   sinon → tous les jours
  */
 export function isDue(t, date) {
+  if (masquee(t, date)) return false;
+  return dueBrut(t, date);
+}
+
+function dueBrut(t, date) {
   if (t.t === PONCTUELLE) return store.entry(date, t.id) !== 1;
   if (t.j && t.j.length) return t.j.includes(weekday(date));
   if (t.int) {
@@ -24,6 +29,28 @@ export function isDue(t, date) {
     return !derniere || diff(derniere, date) >= t.int;
   }
   return true;
+}
+
+/**
+ * Une tâche est masquée un jour donné si une tâche qui la remplace est due
+ * ce jour-là.
+ *
+ * Le remplacement ne vaut que sur un niveau : on interroge dueBrut et non
+ * isDue, ce qui interdit les chaînes et rend les boucles impossibles.
+ */
+export function masquee(t, date) {
+  if (t.t !== RECURRENTE) return false;
+  for (const a of store.tasks()) {
+    if (a.id === t.id || a.t !== RECURRENTE) continue;
+    if (a.abs && a.abs.includes(t.id) && dueBrut(a, date)) return true;
+  }
+  return false;
+}
+
+/** Les tâches que `t` remplace, dans l'ordre du store. */
+export function absorbees(t) {
+  if (!t.abs || !t.abs.length) return [];
+  return store.tasks().filter(x => t.abs.includes(x.id));
 }
 
 function dernierFait(id, date) {
@@ -152,6 +179,9 @@ export function series(t, jusqu = today()) {
     let reussi;
 
     if (t.t === RECURRENTE) {
+      // Jour où une tâche remplaçante prenait le relais : neutre.
+      if (brut !== 1 && masquee(t, d)) continue;
+
       const du = t.j && t.j.length
         ? t.j.includes(weekday(d))
         : (!derniere || diff(derniere, d) >= (t.int || 1));
