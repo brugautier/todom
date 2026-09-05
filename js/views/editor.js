@@ -18,7 +18,7 @@ function neuf() {
   return {
     n: '', t: engine.COMPTEUR,
     u: '', tot: '', fin: new Date().getFullYear() + '-12-31',
-    deja: '', deb: today(),
+    deja: '', deb: today(), lim: '',
     mode: 'int', int: 1, j: [],
   };
 }
@@ -29,6 +29,7 @@ function depuis(t) {
     t: t.t,
     u: t.u || '', tot: t.tot ?? '', fin: t.fin || '',
     deja: '', deb: t.deb || today(),
+    lim: t.t === engine.PONCTUELLE ? (t.fin || '') : '',
     mode: t.j && t.j.length ? 'j' : 'int',
     int: t.int || 1,
     j: t.j ? [...t.j] : [],
@@ -56,11 +57,13 @@ export function render(racine) {
   racine.appendChild(champ('Nom', texte('n', b.n, 'Marche')));
 
   racine.appendChild(champ('Type', segments([
-    ['À cocher', engine.COCHE],
+    ['Récurrente', engine.RECURRENTE],
     ['Compteur', engine.COMPTEUR],
-  ], b.t, v => { relire(); b.t = v; redessiner(); })));
+    ['Ponctuelle', engine.PONCTUELLE],
+  ], b.t, v => { relire(); b.t = v; redessiner(); }, 'trois')));
 
   if (b.t === engine.COMPTEUR) rendreCompteur(racine, b);
+  else if (b.t === engine.PONCTUELLE) rendrePonctuelle(racine, b);
   else rendreCoche(racine, b);
 
   if (cible) racine.appendChild(suppression());
@@ -94,6 +97,15 @@ function rendreCompteur(racine, b) {
       racine.appendChild(depuis);
     }
   }
+}
+
+function rendrePonctuelle(racine, b) {
+  const bloc = champ('Date limite', date('lim', b.lim));
+  const aide = document.createElement('p');
+  aide.className = 'aide';
+  aide.textContent = 'Facultative. La tâche revient chaque jour tant qu’elle n’est pas faite.';
+  bloc.appendChild(aide);
+  racine.appendChild(bloc);
 }
 
 function rendreCoche(racine, b) {
@@ -146,9 +158,9 @@ function nombre(cle, valeur, exemple) {
   return i;
 }
 
-function segments(options, actif, choisir) {
+function segments(options, actif, choisir, variante) {
   const el = document.createElement('div');
-  el.className = 'segments';
+  el.className = 'segments' + (variante ? ' ' + variante : '');
   for (const [libelle, valeur] of options) {
     const b = document.createElement('button');
     b.className = 'seg' + (valeur === actif ? ' on' : '');
@@ -242,14 +254,17 @@ function enregistrer() {
   if (!nom) return erreur('Donne un nom à la tâche.');
 
   let tache;
-  if (b.t === engine.COMPTEUR) {
+  if (b.t === engine.PONCTUELLE) {
+    tache = { n: nom, t: engine.PONCTUELLE };
+    if (b.lim) tache.fin = b.lim;
+  } else if (b.t === engine.COMPTEUR) {
     const tot = parseFloat(String(b.tot).replace(',', '.'));
     if (!(tot > 0)) return erreur('Le total visé doit être supérieur à zéro.');
     if (!b.fin) return erreur('Choisis une échéance.');
     tache = { n: nom, t: engine.COMPTEUR, u: b.u.trim(), tot, fin: b.fin };
     if (b.deb) tache.deb = b.deb;
   } else {
-    tache = { n: nom, t: engine.COCHE };
+    tache = { n: nom, t: engine.RECURRENTE };
     if (b.mode === 'j') {
       if (!b.j.length) return erreur('Choisis au moins un jour.');
       tache.j = b.j;
@@ -261,7 +276,12 @@ function enregistrer() {
   }
 
   if (cible) {
-    store.updateTask(cible, { ...tache, j: tache.j || null, int: tache.int || null });
+    // On repasse tous les champs à null avant d'appliquer les nouveaux :
+    // changer de type ne doit pas laisser traîner l'ancienne règle.
+    store.updateTask(cible, {
+      u: null, tot: null, fin: null, deb: null, int: null, j: null,
+      ...tache,
+    });
   } else {
     const creee = store.addTask(tache);
     const deja = parseFloat(String(b.deja).replace(',', '.'));

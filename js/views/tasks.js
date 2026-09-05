@@ -71,6 +71,9 @@ function rangee(t) {
 
 /** Phrase qui décrit la règle de la tâche, affichée sous son nom. */
 export function resume(t) {
+  if (t.t === engine.PONCTUELLE) {
+    return t.fin ? `Une fois, avant le ${dateCourte(t.fin)}` : 'Une seule fois';
+  }
   if (t.t === engine.COMPTEUR) {
     const u = t.u ? ' ' + t.u : '';
     return `${nb(t.tot)}${u} d’ici le ${dateCourte(t.fin)}`;
