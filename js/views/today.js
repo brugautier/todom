@@ -14,25 +14,32 @@ export function render(racine) {
   const jour = today();
   const items = engine.agenda(jour);
 
-  const aFaire = items.filter(i => !i.etat.fait && !i.etat.ecarte);
-  const classes = items.filter(i => i.etat.fait || i.etat.ecarte);
-
-  racine.appendChild(entete(jour, aFaire.length, items.length));
+  const restantes = items.filter(i => !i.etat.fait && !i.etat.ecarte).length;
+  racine.appendChild(entete(jour, restantes, items.length));
 
   if (!items.length) {
     racine.appendChild(accueilVide());
     return;
   }
 
-  for (const i of aFaire) racine.appendChild(carte(i, jour));
+  const termine = i => (i.etat.fait || i.etat.ecarte ? 1 : 0);
+  const ordonnees = [...items].sort((a, b) => termine(a) - termine(b));
 
-  if (classes.length) {
-    const t = document.createElement('p');
-    t.className = 'sec';
-    t.textContent = 'Terminé';
-    racine.appendChild(t);
-    for (const i of classes) racine.appendChild(carte(i, jour));
-  }
+  const groupes = engine.grouper(ordonnees, i => i.task);
+  const muet = engine.sansTitres(groupes);
+
+  groupes.forEach((g, rang) => {
+    if (!muet) racine.appendChild(titreGroupe(g.cat, rang === 0));
+    for (const i of g.items) racine.appendChild(carte(i, jour));
+  });
+}
+
+/** Titre de catégorie */
+function titreGroupe(texte, premier) {
+  const el = document.createElement('p');
+  el.className = 'sec' + (premier ? ' premier' : '');
+  el.textContent = texte;
+  return el;
 }
 
 function entete(jour, restantes, total) {

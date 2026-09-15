@@ -16,8 +16,23 @@ export function render(racine) {
     return;
   }
 
-  for (const t of taches) racine.appendChild(rangee(t));
+  const groupes = engine.grouper(taches);
+  const muet = engine.sansTitres(groupes);
+
+  groupes.forEach((g, rang) => {
+    if (!muet) racine.appendChild(titreGroupe(g.cat, rang === 0));
+    for (const t of g.items) racine.appendChild(rangee(t));
+  });
 }
+
+/** Titre de catégorie */
+function titreGroupe(texte, premier) {
+  const el = document.createElement('p');
+  el.className = 'sec' + (premier ? ' premier' : '');
+  el.textContent = texte;
+  return el;
+}
+
 
 function entete() {
   const el = document.createElement('header');

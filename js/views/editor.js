@@ -13,7 +13,7 @@ function neuf() {
   return {
     n: '', t: engine.COMPTEUR,
     u: '', tot: '', fin: new Date().getFullYear() + '-12-31',
-    deja: '', deb: today(), lim: '',
+    cat: '', deja: '', deb: today(), lim: '',
     mode: 'int', int: 1, j: [], abs: [], ann: false, nb: '',
   };
 }
@@ -22,6 +22,7 @@ function depuis(t) {
   return {
     n: t.n || '',
     t: t.t,
+    cat: t.cat || '',
     u: t.u || '', tot: t.tot ?? '', fin: t.fin || '',
     deja: '', deb: t.deb || today(),
     lim: t.t === engine.PONCTUELLE ? (t.fin || '') : '',
@@ -53,6 +54,7 @@ export function render(racine) {
   racine.appendChild(barre());
 
   racine.appendChild(champ('Nom', texte('n', b.n, 'Marche')));
+  rendreCategorie(racine, b);
 
   racine.appendChild(champ('Type', segments([
     ['Récurrente', engine.RECURRENTE],
@@ -68,6 +70,25 @@ export function render(racine) {
 }
 
 /* ---------------- Blocs de champs ---------------- */
+
+function rendreCategorie(racine, b) {
+  const champTexte = texte('cat', b.cat, 'Maison, Sport, Santé…');
+  champTexte.setAttribute('list', 'categories-connues');
+  champTexte.autocapitalize = 'sentences';
+
+  const bloc = champ('Catégorie', champTexte);
+
+  const liste = document.createElement('datalist');
+  liste.id = 'categories-connues';
+  for (const c of engine.categories()) {
+    const option = document.createElement('option');
+    option.value = c;
+    liste.appendChild(option);
+  }
+  bloc.appendChild(liste);
+
+  racine.appendChild(bloc);
+}
 
 function rendreCompteur(racine, b) {
   const duo = document.createElement('div');
@@ -353,12 +374,15 @@ function enregistrer() {
     }
   }
 
+  const cat = b.cat.trim();
+  if (cat) tache.cat = cat;
+
   if (cible) {
     // On repasse tous les champs à null avant d'appliquer les nouveaux :
     // changer de type ne doit pas laisser traîner l'ancienne règle.
     store.updateTask(cible, {
       u: null, tot: null, fin: null, deb: null, int: null, j: null,
-      abs: null, ann: null, nb: null,
+      abs: null, ann: null, nb: null, cat: null,
       ...tache,
     });
   } else {

@@ -135,6 +135,48 @@ export function triees() {
   return [...store.tasks()].sort(parNom);
 }
 
+/* ================= Catégories ================= */
+
+export const SANS_CATEGORIE = 'Sans catégorie';
+
+/** Catégorie d'une tâche, jamais vide. */
+export function categorie(t) {
+  return (t.cat || '').trim() || SANS_CATEGORIE;
+}
+
+/** Catégories déjà utilisées, triées. Sert à l'autocomplétion du formulaire. */
+export function categories() {
+  const vues = new Set();
+  for (const t of store.tasks()) {
+    const c = (t.cat || '').trim();
+    if (c) vues.add(c);
+  }
+  return [...vues].sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+}
+
+export function grouper(items, lire = x => x) {
+  const paquets = new Map();
+
+  for (const item of items) {
+    const c = categorie(lire(item));
+    if (!paquets.has(c)) paquets.set(c, []);
+    paquets.get(c).push(item);
+  }
+
+  return [...paquets.keys()]
+    .sort((a, b) => {
+      if (a === SANS_CATEGORIE) return 1;
+      if (b === SANS_CATEGORIE) return -1;
+      return a.localeCompare(b, 'fr', { sensitivity: 'base' });
+    })
+    .map(cat => ({ cat, items: paquets.get(cat) }));
+}
+
+/** Vrai quand aucune catégorie n'est utilisée : inutile d'afficher un titre. */
+export function sansTitres(groupes) {
+  return groupes.length <= 1 && (!groupes[0] || groupes[0].cat === SANS_CATEGORIE);
+}
+
 export function agenda(date) {
   return triees()
     .map(t => ({ task: t, etat: state(t, date) }))
