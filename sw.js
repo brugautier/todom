@@ -1,4 +1,4 @@
-const VERSION = 'todom-v1.1.0';
+const VERSION = 'todom-v1.2.0';
 
 const FICHIERS = [
   './',
@@ -19,8 +19,6 @@ const FICHIERS = [
   './icons/icon-512.png',
 ];
 
-// Installation : on remplit le cache, puis on prend la main sans attendre
-// que tous les onglets soient fermés.
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(VERSION)
@@ -29,7 +27,6 @@ self.addEventListener('install', e => {
   );
 });
 
-// Activation : on jette les caches des versions précédentes.
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
@@ -40,8 +37,6 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Lecture : le cache d'abord, le réseau seulement en secours.
-// L'appli n'appelle aucun service distant, donc rien à rafraîchir en direct.
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
 
