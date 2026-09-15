@@ -133,7 +133,7 @@ nav a.on{color:var(--accent);font-weight:500}
 .duo-entete{display:flex;justify-content:space-between;align-items:center}
 button.court{height:36px}
 
-.carte.rangee{display:flex;align-items:center;gap:12px}
+.carte.rangee{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .chevron{flex:none;font-size:22px;line-height:1;color:var(--doux)}
 
 /* ---------- Écran Progression ---------- */
