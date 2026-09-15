@@ -13,8 +13,8 @@ function neuf() {
   return {
     n: '', t: engine.COMPTEUR,
     u: '', tot: '', fin: new Date().getFullYear() + '-12-31',
-    deja: '', deb: today(), lim: '',
-    mode: 'int', int: 1, j: [], abs: [],
+    cat: '', deja: '', deb: today(), lim: '',
+    mode: 'int', int: 1, j: [], abs: [], ann: false, nb: '',
   };
 }
 
@@ -22,6 +22,7 @@ function depuis(t) {
   return {
     n: t.n || '',
     t: t.t,
+    cat: t.cat || '',
     u: t.u || '', tot: t.tot ?? '', fin: t.fin || '',
     deja: '', deb: t.deb || today(),
     lim: t.t === engine.PONCTUELLE ? (t.fin || '') : '',
@@ -29,6 +30,8 @@ function depuis(t) {
     int: t.int || 1,
     j: t.j ? [...t.j] : [],
     abs: t.abs ? [...t.abs] : [],
+    ann: !!t.ann,
+    nb: t.nb ?? '',
   };
 }
 
@@ -51,6 +54,7 @@ export function render(racine) {
   racine.appendChild(barre());
 
   racine.appendChild(champ('Nom', texte('n', b.n, 'Marche')));
+  rendreCategorie(racine, b);
 
   racine.appendChild(champ('Type', segments([
     ['Récurrente', engine.RECURRENTE],
@@ -66,6 +70,25 @@ export function render(racine) {
 }
 
 /* ---------------- Blocs de champs ---------------- */
+
+function rendreCategorie(racine, b) {
+  const champTexte = texte('cat', b.cat, 'Maison, Sport, Santé…');
+  champTexte.setAttribute('list', 'categories-connues');
+  champTexte.autocapitalize = 'sentences';
+
+  const bloc = champ('Catégorie', champTexte);
+
+  const liste = document.createElement('datalist');
+  liste.id = 'categories-connues';
+  for (const c of engine.categories()) {
+    const option = document.createElement('option');
+    option.value = c;
+    liste.appendChild(option);
+  }
+  bloc.appendChild(liste);
+
+  racine.appendChild(bloc);
+}
 
 function rendreCompteur(racine, b) {
   const duo = document.createElement('div');
@@ -95,6 +118,19 @@ function rendreCompteur(racine, b) {
   }
 }
 
+function rendreAnnulable(racine, b) {
+  const bloc = champ('Annulable', segments([
+    ['Non', false],
+    ['Oui', true],
+  ], !!b.ann, v => { relire(); b.ann = v; redessiner(); }));
+
+  const aide = document.createElement('p');
+  aide.className = 'aide';
+  aide.textContent = 'Ajoute un bouton pour annuler la journée sans casser la série.';
+  bloc.appendChild(aide);
+  racine.appendChild(bloc);
+}
+
 function rendrePonctuelle(racine, b) {
   const bloc = champ('Date limite', date('lim', b.lim));
   const aide = document.createElement('p');
@@ -121,6 +157,8 @@ function rendreCoche(racine, b) {
     racine.appendChild(champ('Jours', pastilles(b)));
   }
 
+  rendreObjectif(racine, b);
+
   const autres = store.tasks().filter(
     x => x.t === engine.RECURRENTE && x.id !== cible && !(x.abs && x.abs.length)
   );
@@ -132,6 +170,27 @@ function rendreCoche(racine, b) {
     bloc.appendChild(aide);
     racine.appendChild(bloc);
   }
+
+  rendreAnnulable(racine, b);
+}
+
+function rendreObjectif(racine, b) {
+  const bloc = champ('Objectif, en nombre de fois', nombre('nb', b.nb, 'facultatif'));
+  bloc.querySelector('input').onchange = () => { relire(); redessiner(); };
+  racine.appendChild(bloc);
+
+  if (!(parseFloat(String(b.nb).replace(',', '.')) > 0)) return;
+
+  const duo = document.createElement('div');
+  duo.className = 'duo';
+  duo.append(champ('Depuis le', date('deb', b.deb)), champ('Échéance', date('fin', b.fin)));
+  racine.appendChild(duo);
+
+  const aide = document.createElement('p');
+  aide.className = 'aide';
+  aide.textContent = 'Sans effet sur l’écran Aujourd’hui : la récurrence commande seule. '
+    + 'Passé l’échéance, l’objectif s’efface et le total continue.';
+  racine.appendChild(aide);
 }
 
 /** Liste de bascules : les tâches que celle-ci absorbe. */
@@ -286,6 +345,7 @@ function enregistrer() {
   if (b.t === engine.PONCTUELLE) {
     tache = { n: nom, t: engine.PONCTUELLE };
     if (b.lim) tache.fin = b.lim;
+    if (b.ann) tache.ann = true;
   } else if (b.t === engine.COMPTEUR) {
     const tot = parseFloat(String(b.tot).replace(',', '.'));
     if (!(tot > 0)) return erreur('Le total visé doit être supérieur à zéro.');
@@ -303,13 +363,26 @@ function enregistrer() {
       tache.int = int;
     }
     if (b.abs.length) tache.abs = b.abs;
+    if (b.ann) tache.ann = true;
+
+    const vise = parseFloat(String(b.nb).replace(',', '.'));
+    if (vise > 0) {
+      if (!b.fin) return erreur('Choisis une échéance pour l’objectif.');
+      tache.nb = vise;
+      tache.fin = b.fin;
+      tache.deb = b.deb;
+    }
   }
+
+  const cat = b.cat.trim();
+  if (cat) tache.cat = cat;
 
   if (cible) {
     // On repasse tous les champs à null avant d'appliquer les nouveaux :
     // changer de type ne doit pas laisser traîner l'ancienne règle.
     store.updateTask(cible, {
-      u: null, tot: null, fin: null, deb: null, int: null, j: null, abs: null,
+      u: null, tot: null, fin: null, deb: null, int: null, j: null,
+      abs: null, ann: null, nb: null, cat: null,
       ...tache,
     });
   } else {

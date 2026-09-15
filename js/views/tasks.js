@@ -1,4 +1,3 @@
-import * as store from '../store.js';
 import * as engine from '../engine.js';
 import { parse } from '../date.js';
 
@@ -8,7 +7,7 @@ const JOURS = ['', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 
 export function render(racine) {
   racine.appendChild(entete());
 
-  const taches = store.tasks();
+  const taches = engine.triees();
   if (!taches.length) {
     const p = document.createElement('p');
     p.className = 'vide';
@@ -17,8 +16,23 @@ export function render(racine) {
     return;
   }
 
-  for (const t of taches) racine.appendChild(rangee(t));
+  const groupes = engine.grouper(taches);
+  const muet = engine.sansTitres(groupes);
+
+  groupes.forEach((g, rang) => {
+    if (!muet) racine.appendChild(titreGroupe(g.cat, rang === 0));
+    for (const t of g.items) racine.appendChild(rangee(t));
+  });
 }
+
+/** Titre de catégorie */
+function titreGroupe(texte, premier) {
+  const el = document.createElement('p');
+  el.className = 'sec' + (premier ? ' premier' : '');
+  el.textContent = texte;
+  return el;
+}
+
 
 function entete() {
   const el = document.createElement('header');
@@ -93,6 +107,10 @@ export function resume(t) {
       : 'Chaque ' + t.j.map(n => JOURS[n]).join(', ');
   } else {
     base = t.int > 1 ? `Tous les ${t.int} jours` : 'Chaque jour';
+  }
+
+  if (t.nb > 0 && t.fin) {
+    base += ` · ${nb(t.nb)} fois d’ici le ${dateCourte(t.fin)}`;
   }
 
   const remplacees = engine.absorbees(t);

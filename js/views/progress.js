@@ -6,7 +6,7 @@ const nb = n => Number(n).toLocaleString('fr-FR', { maximumFractionDigits: 1 });
 
 export function render(racine) {
   const jour = today();
-  const taches = store.tasks().filter(t => t.t !== engine.PONCTUELLE);
+  const taches = engine.triees().filter(t => t.t !== engine.PONCTUELLE);
 
   racine.appendChild(entete(taches, jour));
 
@@ -18,11 +18,21 @@ export function render(racine) {
     return;
   }
 
-  for (const t of taches) {
-    racine.appendChild(
-      t.t === engine.COMPTEUR ? carteCompteur(t, jour) : carteCoche(t, jour)
-    );
-  }
+  const groupes = engine.grouper(taches);
+  const muet = engine.sansTitres(groupes);
+
+  groupes.forEach((g, rang) => {
+    if (!muet) racine.appendChild(titreGroupe(g.cat, rang === 0));
+    for (const t of g.items) racine.appendChild(carte(t, jour));
+  });
+}
+
+/** Titre de catégorie */
+function titreGroupe(texte, premier) {
+  const el = document.createElement('p');
+  el.className = 'sec' + (premier ? ' premier' : '');
+  el.textContent = texte;
+  return el;
 }
 
 function entete(taches, jour) {
@@ -55,13 +65,14 @@ function echeanceProche(taches, jour) {
 
 /* ---------------- Cartes ---------------- */
 
-function carteCompteur(t, jour) {
+function carte(t, jour) {
   const el = document.createElement('article');
   el.className = 'carte';
 
-  const cumul = store.total(t.id, null, jour);
-  const part = t.tot ? Math.min(100, cumul / t.tot * 100) : 0;
-  const u = t.u ? ' ' + t.u : '';
+  const obj = engine.objectif(t, jour);
+  const stats = engine.series(t, jour);
+  const cumul = t.t === engine.COMPTEUR ? store.total(t.id, null, jour) : stats.total;
+  const u = obj && obj.unite ? ' ' + obj.unite : '';
 
   const ligne = document.createElement('div');
   ligne.className = 'ligne';
@@ -69,36 +80,32 @@ function carteCompteur(t, jour) {
   const nom = document.createElement('span');
   nom.className = 'nom';
   nom.textContent = t.n;
+  ligne.appendChild(nom);
 
-  const chiffres = document.createElement('span');
-  chiffres.className = 'chiffres';
-  chiffres.textContent = `${nb(cumul)} / ${nb(t.tot)}${u}`;
+  if (obj) {
+    const chiffres = document.createElement('span');
+    chiffres.className = 'chiffres';
+    chiffres.textContent = `${nb(cumul)} / ${nb(obj.vise)}${u}`;
+    ligne.appendChild(chiffres);
+  }
 
-  ligne.append(nom, chiffres);
+  el.appendChild(ligne);
 
-  const barre = document.createElement('div');
-  barre.className = 'barre epaisse';
-  const jauge = document.createElement('i');
-  jauge.style.width = part.toFixed(1) + '%';
-  barre.appendChild(jauge);
+  if (obj) {
+    const barre = document.createElement('div');
+    barre.className = 'barre epaisse';
+    const jauge = document.createElement('i');
+    jauge.style.width = Math.min(100, cumul / obj.vise * 100).toFixed(1) + '%';
+    barre.appendChild(jauge);
+    el.appendChild(barre);
+  }
 
   const bas = document.createElement('div');
-  bas.className = 'bas';
-  bas.append(indicateurRythme(t, jour, u), badgeSerie(t, jour));
+  bas.className = 'bas' + (obj ? '' : ' seul');
+  if (obj) bas.appendChild(indicateurRythme(t, jour, u));
+  bas.appendChild(badgeSerie(stats));
 
-  el.append(ligne, barre, bas);
-  return el;
-}
-
-function carteCoche(t, jour) {
-  const el = document.createElement('article');
-  el.className = 'carte rangee';
-
-  const nom = document.createElement('span');
-  nom.className = 'nom';
-  nom.textContent = t.n;
-
-  el.append(nom, badgeSerie(t, jour));
+  el.appendChild(bas);
   return el;
 }
 
@@ -126,15 +133,13 @@ function indicateurRythme(t, jour, u) {
   return el;
 }
 
-function badgeSerie(t, jour) {
-  const { encours, record } = engine.series(t, jour);
-
+function badgeSerie({ encours, record, total }) {
   const el = document.createElement('span');
   el.className = 'serie';
   el.appendChild(flamme(encours > 0));
 
   const texte = document.createElement('span');
-  texte.textContent = `${encours} jour${encours > 1 ? 's' : ''} · record ${record}`;
+  texte.textContent = `${encours} jour${encours > 1 ? 's' : ''} · record ${record} · ${total} fois`;
   el.appendChild(texte);
 
   return el;

@@ -127,8 +127,58 @@ export function state(t, date) {
   };
 }
 
+export function parNom(a, b) {
+  return a.n.localeCompare(b.n, 'fr', { sensitivity: 'base' });
+}
+
+export function triees() {
+  return [...store.tasks()].sort(parNom);
+}
+
+/* ================= Catégories ================= */
+
+export const SANS_CATEGORIE = 'Sans catégorie';
+
+/** Catégorie d'une tâche, jamais vide. */
+export function categorie(t) {
+  return (t.cat || '').trim() || SANS_CATEGORIE;
+}
+
+/** Catégories déjà utilisées, triées. Sert à l'autocomplétion du formulaire. */
+export function categories() {
+  const vues = new Set();
+  for (const t of store.tasks()) {
+    const c = (t.cat || '').trim();
+    if (c) vues.add(c);
+  }
+  return [...vues].sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+}
+
+export function grouper(items, lire = x => x) {
+  const paquets = new Map();
+
+  for (const item of items) {
+    const c = categorie(lire(item));
+    if (!paquets.has(c)) paquets.set(c, []);
+    paquets.get(c).push(item);
+  }
+
+  return [...paquets.keys()]
+    .sort((a, b) => {
+      if (a === SANS_CATEGORIE) return 1;
+      if (b === SANS_CATEGORIE) return -1;
+      return a.localeCompare(b, 'fr', { sensitivity: 'base' });
+    })
+    .map(cat => ({ cat, items: paquets.get(cat) }));
+}
+
+/** Vrai quand aucune catégorie n'est utilisée : inutile d'afficher un titre. */
+export function sansTitres(groupes) {
+  return groupes.length <= 1 && (!groupes[0] || groupes[0].cat === SANS_CATEGORIE);
+}
+
 export function agenda(date) {
-  return store.tasks()
+  return triees()
     .map(t => ({ task: t, etat: state(t, date) }))
     .filter(({ etat }) => etat.du || etat.ecarte || etat.fait);
 }
@@ -160,12 +210,12 @@ export function debut(t) {
  * La journée en cours ne peut qu'allonger la série, jamais la casser.
  */
 export function series(t, jusqu = today()) {
-  if (t.t === PONCTUELLE) return { encours: 0, record: 0 };
+  if (t.t === PONCTUELLE) return { encours: 0, record: 0, total: 0 };
 
   const depart = premierJour(t.id);
-  if (!depart) return { encours: 0, record: 0 };
+  if (!depart) return { encours: 0, record: 0, total: 0 };
 
-  let encours = 0, record = 0, acquis = 0, derniere = null;
+  let encours = 0, record = 0, total = 0, acquis = 0, derniere = null;
 
   for (let d = depart; d <= jusqu; d = add(d, 1)) {
     const brut = store.entry(d, t.id);
@@ -199,31 +249,51 @@ export function series(t, jusqu = today()) {
 
     if (reussi) {
       encours++;
+      total++;
       if (encours > record) record = encours;
     } else if (!aujourdhui) {
       encours = 0;
     }
   }
 
-  return { encours, record };
+  return { encours, record, total };
 }
 
 /**
- * Écart au rythme idéal, exprimé dans l'unité de la tâche.
+ * Objectif chiffré d'une tâche, ou null si elle n'en a pas.
+ * Un compteur vise un total dans son unité, une récurrente un nombre de fois.
+ *
+ * Passé l'échéance, l'objectif d'une récurrente cesse d'exister, pas la tâche
+ */
+export function objectif(t, date = today()) {
+  if (t.t === COMPTEUR) {
+    return t.tot > 0 ? { vise: t.tot, unite: t.u || '', fin: t.fin } : null;
+  }
+  if (t.t === RECURRENTE && t.nb > 0 && t.fin && date <= t.fin) {
+    return { vise: t.nb, unite: 'fois', fin: t.fin };
+  }
+  return null;
+}
+
+/**
+ * Écart au rythme idéal, dans l'unité de la tâche.
  * Positif = avance. La journée en cours n'est pas encore attendue.
  */
 export function rythme(t, date = today()) {
-  if (t.t !== COMPTEUR) return null;
+  const obj = objectif(t, date);
+  if (!obj) return null;
 
   const de = debut(t);
-  const total = eligibles(t, de, t.fin);
+  const total = eligibles(t, de, obj.fin);
   if (total <= 0) return null;
 
   const ecoules = Math.max(0, eligibles(t, de, add(date, -1)));
-  const attendu = (t.tot || 0) * (ecoules / total);
-  const cumul = store.total(t.id, null, date);
+  const attendu = obj.vise * (ecoules / total);
+  const cumul = t.t === COMPTEUR
+    ? store.total(t.id, null, date)
+    : series(t, date).total;
 
-  return { ecart: cumul - attendu, attendu, cumul };
+  return { ecart: cumul - attendu, attendu, cumul, vise: obj.vise, unite: obj.unite };
 }
 
 /* ================= Entretien ================= */
