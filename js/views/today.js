@@ -104,6 +104,25 @@ function carte({ task, etat }, jour) {
   }
 
   haut.append(marque, corps);
+
+  // Bouton d'annulation : uniquement sur les tâches qui l'ont activé, et
+  // seulement tant qu'il y a quelque chose à annuler.
+  const annulable = task.ann
+    && etat.type === engine.RECURRENTE
+    && !etat.ecarte && !etat.fait;
+
+  if (annulable) {
+    const bouton = document.createElement('button');
+    bouton.className = 'icone';
+    bouton.textContent = '⊘';
+    bouton.setAttribute('aria-label', `Annuler ${task.n} pour aujourd’hui`);
+    bouton.onclick = ev => {
+      ev.stopPropagation();
+      store.setEntry(jour, task.id, store.ECARTE);
+    };
+    haut.appendChild(bouton);
+  }
+
   el.appendChild(haut);
 
   if (deplie) el.appendChild(zoneSaisie(task, jour));

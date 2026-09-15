@@ -14,7 +14,7 @@ function neuf() {
     n: '', t: engine.COMPTEUR,
     u: '', tot: '', fin: new Date().getFullYear() + '-12-31',
     deja: '', deb: today(), lim: '',
-    mode: 'int', int: 1, j: [], abs: [],
+    mode: 'int', int: 1, j: [], abs: [], ann: false,
   };
 }
 
@@ -29,6 +29,7 @@ function depuis(t) {
     int: t.int || 1,
     j: t.j ? [...t.j] : [],
     abs: t.abs ? [...t.abs] : [],
+    ann: !!t.ann,
   };
 }
 
@@ -95,6 +96,19 @@ function rendreCompteur(racine, b) {
   }
 }
 
+function rendreAnnulable(racine, b) {
+  const bloc = champ('Annulable', segments([
+    ['Non', false],
+    ['Oui', true],
+  ], !!b.ann, v => { relire(); b.ann = v; redessiner(); }));
+
+  const aide = document.createElement('p');
+  aide.className = 'aide';
+  aide.textContent = 'Ajoute un bouton pour annuler la journée sans casser la série.';
+  bloc.appendChild(aide);
+  racine.appendChild(bloc);
+}
+
 function rendrePonctuelle(racine, b) {
   const bloc = champ('Date limite', date('lim', b.lim));
   const aide = document.createElement('p');
@@ -132,6 +146,8 @@ function rendreCoche(racine, b) {
     bloc.appendChild(aide);
     racine.appendChild(bloc);
   }
+
+  rendreAnnulable(racine, b);
 }
 
 /** Liste de bascules : les tâches que celle-ci absorbe. */
@@ -286,6 +302,7 @@ function enregistrer() {
   if (b.t === engine.PONCTUELLE) {
     tache = { n: nom, t: engine.PONCTUELLE };
     if (b.lim) tache.fin = b.lim;
+    if (b.ann) tache.ann = true;
   } else if (b.t === engine.COMPTEUR) {
     const tot = parseFloat(String(b.tot).replace(',', '.'));
     if (!(tot > 0)) return erreur('Le total visé doit être supérieur à zéro.');
@@ -303,13 +320,15 @@ function enregistrer() {
       tache.int = int;
     }
     if (b.abs.length) tache.abs = b.abs;
+    if (b.ann) tache.ann = true;
   }
 
   if (cible) {
     // On repasse tous les champs à null avant d'appliquer les nouveaux :
     // changer de type ne doit pas laisser traîner l'ancienne règle.
     store.updateTask(cible, {
-      u: null, tot: null, fin: null, deb: null, int: null, j: null, abs: null,
+      u: null, tot: null, fin: null, deb: null, int: null, j: null,
+      abs: null, ann: null,
       ...tache,
     });
   } else {
