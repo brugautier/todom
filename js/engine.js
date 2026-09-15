@@ -160,12 +160,12 @@ export function debut(t) {
  * La journée en cours ne peut qu'allonger la série, jamais la casser.
  */
 export function series(t, jusqu = today()) {
-  if (t.t === PONCTUELLE) return { encours: 0, record: 0 };
+  if (t.t === PONCTUELLE) return { encours: 0, record: 0, total: 0 };
 
   const depart = premierJour(t.id);
-  if (!depart) return { encours: 0, record: 0 };
+  if (!depart) return { encours: 0, record: 0, total: 0 };
 
-  let encours = 0, record = 0, acquis = 0, derniere = null;
+  let encours = 0, record = 0, total = 0, acquis = 0, derniere = null;
 
   for (let d = depart; d <= jusqu; d = add(d, 1)) {
     const brut = store.entry(d, t.id);
@@ -199,13 +199,14 @@ export function series(t, jusqu = today()) {
 
     if (reussi) {
       encours++;
+      total++;
       if (encours > record) record = encours;
     } else if (!aujourdhui) {
       encours = 0;
     }
   }
 
-  return { encours, record };
+  return { encours, record, total };
 }
 
 /**

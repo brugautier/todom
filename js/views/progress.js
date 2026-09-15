@@ -127,14 +127,14 @@ function indicateurRythme(t, jour, u) {
 }
 
 function badgeSerie(t, jour) {
-  const { encours, record } = engine.series(t, jour);
+  const { encours, record, total } = engine.series(t, jour);
 
   const el = document.createElement('span');
   el.className = 'serie';
   el.appendChild(flamme(encours > 0));
 
   const texte = document.createElement('span');
-  texte.textContent = `${encours} jour${encours > 1 ? 's' : ''} · record ${record}`;
+  texte.textContent = `${encours} jour${encours > 1 ? 's' : ''} · record ${record} · ${total} fois`;
   el.appendChild(texte);
 
   return el;
