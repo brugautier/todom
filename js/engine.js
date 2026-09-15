@@ -210,21 +210,40 @@ export function series(t, jusqu = today()) {
 }
 
 /**
- * Écart au rythme idéal, exprimé dans l'unité de la tâche.
+ * Objectif chiffré d'une tâche, ou null si elle n'en a pas.
+ * Un compteur vise un total dans son unité, une récurrente un nombre de fois.
+ *
+ * Passé l'échéance, l'objectif d'une récurrente cesse d'exister, pas la tâche
+ */
+export function objectif(t, date = today()) {
+  if (t.t === COMPTEUR) {
+    return t.tot > 0 ? { vise: t.tot, unite: t.u || '', fin: t.fin } : null;
+  }
+  if (t.t === RECURRENTE && t.nb > 0 && t.fin && date <= t.fin) {
+    return { vise: t.nb, unite: 'fois', fin: t.fin };
+  }
+  return null;
+}
+
+/**
+ * Écart au rythme idéal, dans l'unité de la tâche.
  * Positif = avance. La journée en cours n'est pas encore attendue.
  */
 export function rythme(t, date = today()) {
-  if (t.t !== COMPTEUR) return null;
+  const obj = objectif(t, date);
+  if (!obj) return null;
 
   const de = debut(t);
-  const total = eligibles(t, de, t.fin);
+  const total = eligibles(t, de, obj.fin);
   if (total <= 0) return null;
 
   const ecoules = Math.max(0, eligibles(t, de, add(date, -1)));
-  const attendu = (t.tot || 0) * (ecoules / total);
-  const cumul = store.total(t.id, null, date);
+  const attendu = obj.vise * (ecoules / total);
+  const cumul = t.t === COMPTEUR
+    ? store.total(t.id, null, date)
+    : series(t, date).total;
 
-  return { ecart: cumul - attendu, attendu, cumul };
+  return { ecart: cumul - attendu, attendu, cumul, vise: obj.vise, unite: obj.unite };
 }
 
 /* ================= Entretien ================= */

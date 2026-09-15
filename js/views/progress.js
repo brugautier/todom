@@ -19,9 +19,7 @@ export function render(racine) {
   }
 
   for (const t of taches) {
-    racine.appendChild(
-      t.t === engine.COMPTEUR ? carteCompteur(t, jour) : carteCoche(t, jour)
-    );
+    racine.appendChild(carte(t, jour));
   }
 }
 
@@ -55,13 +53,14 @@ function echeanceProche(taches, jour) {
 
 /* ---------------- Cartes ---------------- */
 
-function carteCompteur(t, jour) {
+function carte(t, jour) {
   const el = document.createElement('article');
   el.className = 'carte';
 
-  const cumul = store.total(t.id, null, jour);
-  const part = t.tot ? Math.min(100, cumul / t.tot * 100) : 0;
-  const u = t.u ? ' ' + t.u : '';
+  const obj = engine.objectif(t, jour);
+  const stats = engine.series(t, jour);
+  const cumul = t.t === engine.COMPTEUR ? store.total(t.id, null, jour) : stats.total;
+  const u = obj && obj.unite ? ' ' + obj.unite : '';
 
   const ligne = document.createElement('div');
   ligne.className = 'ligne';
@@ -69,36 +68,32 @@ function carteCompteur(t, jour) {
   const nom = document.createElement('span');
   nom.className = 'nom';
   nom.textContent = t.n;
+  ligne.appendChild(nom);
 
-  const chiffres = document.createElement('span');
-  chiffres.className = 'chiffres';
-  chiffres.textContent = `${nb(cumul)} / ${nb(t.tot)}${u}`;
+  if (obj) {
+    const chiffres = document.createElement('span');
+    chiffres.className = 'chiffres';
+    chiffres.textContent = `${nb(cumul)} / ${nb(obj.vise)}${u}`;
+    ligne.appendChild(chiffres);
+  }
 
-  ligne.append(nom, chiffres);
+  el.appendChild(ligne);
 
-  const barre = document.createElement('div');
-  barre.className = 'barre epaisse';
-  const jauge = document.createElement('i');
-  jauge.style.width = part.toFixed(1) + '%';
-  barre.appendChild(jauge);
+  if (obj) {
+    const barre = document.createElement('div');
+    barre.className = 'barre epaisse';
+    const jauge = document.createElement('i');
+    jauge.style.width = Math.min(100, cumul / obj.vise * 100).toFixed(1) + '%';
+    barre.appendChild(jauge);
+    el.appendChild(barre);
+  }
 
   const bas = document.createElement('div');
-  bas.className = 'bas';
-  bas.append(indicateurRythme(t, jour, u), badgeSerie(t, jour));
+  bas.className = 'bas' + (obj ? '' : ' seul');
+  if (obj) bas.appendChild(indicateurRythme(t, jour, u));
+  bas.appendChild(badgeSerie(stats));
 
-  el.append(ligne, barre, bas);
-  return el;
-}
-
-function carteCoche(t, jour) {
-  const el = document.createElement('article');
-  el.className = 'carte rangee';
-
-  const nom = document.createElement('span');
-  nom.className = 'nom';
-  nom.textContent = t.n;
-
-  el.append(nom, badgeSerie(t, jour));
+  el.appendChild(bas);
   return el;
 }
 
@@ -126,9 +121,7 @@ function indicateurRythme(t, jour, u) {
   return el;
 }
 
-function badgeSerie(t, jour) {
-  const { encours, record, total } = engine.series(t, jour);
-
+function badgeSerie({ encours, record, total }) {
   const el = document.createElement('span');
   el.className = 'serie';
   el.appendChild(flamme(encours > 0));

@@ -95,6 +95,10 @@ export function resume(t) {
     base = t.int > 1 ? `Tous les ${t.int} jours` : 'Chaque jour';
   }
 
+  if (t.nb > 0 && t.fin) {
+    base += ` · ${nb(t.nb)} fois d’ici le ${dateCourte(t.fin)}`;
+  }
+
   const remplacees = engine.absorbees(t);
   if (remplacees.length) {
     base += ' · remplace ' + remplacees.map(x => x.n).join(', ');

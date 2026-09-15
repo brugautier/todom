@@ -14,7 +14,7 @@ function neuf() {
     n: '', t: engine.COMPTEUR,
     u: '', tot: '', fin: new Date().getFullYear() + '-12-31',
     deja: '', deb: today(), lim: '',
-    mode: 'int', int: 1, j: [], abs: [], ann: false,
+    mode: 'int', int: 1, j: [], abs: [], ann: false, nb: '',
   };
 }
 
@@ -30,6 +30,7 @@ function depuis(t) {
     j: t.j ? [...t.j] : [],
     abs: t.abs ? [...t.abs] : [],
     ann: !!t.ann,
+    nb: t.nb ?? '',
   };
 }
 
@@ -135,6 +136,8 @@ function rendreCoche(racine, b) {
     racine.appendChild(champ('Jours', pastilles(b)));
   }
 
+  rendreObjectif(racine, b);
+
   const autres = store.tasks().filter(
     x => x.t === engine.RECURRENTE && x.id !== cible && !(x.abs && x.abs.length)
   );
@@ -148,6 +151,25 @@ function rendreCoche(racine, b) {
   }
 
   rendreAnnulable(racine, b);
+}
+
+function rendreObjectif(racine, b) {
+  const bloc = champ('Objectif, en nombre de fois', nombre('nb', b.nb, 'facultatif'));
+  bloc.querySelector('input').onchange = () => { relire(); redessiner(); };
+  racine.appendChild(bloc);
+
+  if (!(parseFloat(String(b.nb).replace(',', '.')) > 0)) return;
+
+  const duo = document.createElement('div');
+  duo.className = 'duo';
+  duo.append(champ('Depuis le', date('deb', b.deb)), champ('Échéance', date('fin', b.fin)));
+  racine.appendChild(duo);
+
+  const aide = document.createElement('p');
+  aide.className = 'aide';
+  aide.textContent = 'Sans effet sur l’écran Aujourd’hui : la récurrence commande seule. '
+    + 'Passé l’échéance, l’objectif s’efface et le total continue.';
+  racine.appendChild(aide);
 }
 
 /** Liste de bascules : les tâches que celle-ci absorbe. */
@@ -321,6 +343,14 @@ function enregistrer() {
     }
     if (b.abs.length) tache.abs = b.abs;
     if (b.ann) tache.ann = true;
+
+    const vise = parseFloat(String(b.nb).replace(',', '.'));
+    if (vise > 0) {
+      if (!b.fin) return erreur('Choisis une échéance pour l’objectif.');
+      tache.nb = vise;
+      tache.fin = b.fin;
+      tache.deb = b.deb;
+    }
   }
 
   if (cible) {
@@ -328,7 +358,7 @@ function enregistrer() {
     // changer de type ne doit pas laisser traîner l'ancienne règle.
     store.updateTask(cible, {
       u: null, tot: null, fin: null, deb: null, int: null, j: null,
-      abs: null, ann: null,
+      abs: null, ann: null, nb: null,
       ...tache,
     });
   } else {
