@@ -1,4 +1,3 @@
-import * as store from '../store.js';
 import * as engine from '../engine.js';
 import { parse } from '../date.js';
 
@@ -8,7 +7,7 @@ const JOURS = ['', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 
 export function render(racine) {
   racine.appendChild(entete());
 
-  const taches = store.tasks();
+  const taches = engine.triees();
   if (!taches.length) {
     const p = document.createElement('p');
     p.className = 'vide';

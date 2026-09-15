@@ -127,8 +127,16 @@ export function state(t, date) {
   };
 }
 
+export function parNom(a, b) {
+  return a.n.localeCompare(b.n, 'fr', { sensitivity: 'base' });
+}
+
+export function triees() {
+  return [...store.tasks()].sort(parNom);
+}
+
 export function agenda(date) {
-  return store.tasks()
+  return triees()
     .map(t => ({ task: t, etat: state(t, date) }))
     .filter(({ etat }) => etat.du || etat.ecarte || etat.fait);
 }

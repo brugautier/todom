@@ -6,7 +6,7 @@ const nb = n => Number(n).toLocaleString('fr-FR', { maximumFractionDigits: 1 });
 
 export function render(racine) {
   const jour = today();
-  const taches = store.tasks().filter(t => t.t !== engine.PONCTUELLE);
+  const taches = engine.triees().filter(t => t.t !== engine.PONCTUELLE);
 
   racine.appendChild(entete(taches, jour));
 
