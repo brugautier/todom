@@ -18,9 +18,21 @@ export function render(racine) {
     return;
   }
 
-  for (const t of taches) {
-    racine.appendChild(carte(t, jour));
-  }
+  const groupes = engine.grouper(taches);
+  const muet = engine.sansTitres(groupes);
+
+  groupes.forEach((g, rang) => {
+    if (!muet) racine.appendChild(titreGroupe(g.cat, rang === 0));
+    for (const t of g.items) racine.appendChild(carte(t, jour));
+  });
+}
+
+/** Titre de catégorie */
+function titreGroupe(texte, premier) {
+  const el = document.createElement('p');
+  el.className = 'sec' + (premier ? ' premier' : '');
+  el.textContent = texte;
+  return el;
 }
 
 function entete(taches, jour) {
